@@ -1,41 +1,60 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
+// BookMesh — YGG-style dark tracker palette
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#e2e8f0',
+    background: '#0d0f14',
+    tint: '#f97316',
+    icon: '#94a3b8',
+    tabIconDefault: '#64748b',
+    tabIconSelected: '#f97316',
+    card: '#161b27',
+    border: '#1e2535',
+    muted: '#64748b',
+    success: '#22c55e',
+    error: '#ef4444',
+    warning: '#f59e0b',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#e2e8f0',
+    background: '#0d0f14',
+    tint: '#f97316',
+    icon: '#94a3b8',
+    tabIconDefault: '#64748b',
+    tabIconSelected: '#f97316',
+    card: '#161b27',
+    border: '#1e2535',
+    muted: '#64748b',
+    success: '#22c55e',
+    error: '#ef4444',
+    warning: '#f59e0b',
   },
 };
 
+// Category accent colors
+export const CategoryColors: Record<string, string> = {
+  'Roman':       '#818cf8',
+  'Science-Fiction': '#22d3ee',
+  'Policier':    '#f472b6',
+  'Fantasy':     '#a78bfa',
+  'Manga':       '#fb923c',
+  'BD':          '#facc15',
+  'Biographie':  '#34d399',
+  'Histoire':    '#f87171',
+  'Informatique':'#38bdf8',
+  'Sciences':    '#4ade80',
+  'Art':         '#c084fc',
+  'Autre':       '#94a3b8',
+};
+
+export const CATEGORIES = Object.keys(CategoryColors);
+
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
