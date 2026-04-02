@@ -1,4 +1,3 @@
-import { Colors, FormatColors } from '@/constants/theme';
 import { useModal } from '@/core/context/ModalContext';
 import { BookMetadata, MetadataStore } from '@/core/storage/storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,7 +13,6 @@ import {
 import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -25,7 +23,6 @@ import { useConnectivity } from '@/core/context/ConnectivityContext';
 import { FileStore } from '@/core/storage/fileStore';
 import { ActiveDownload, DownloadStore } from '@/core/store/downloadStore';
 
-const C = Colors.dark;
 
 function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -66,8 +63,8 @@ export default function BookDetailScreen() {
 
   if (!book) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <Text style={{ color: C.muted }}>Chargement…</Text>
+      <View className="flex-1 bg-[#0d0f14] justify-center items-center">
+        <Text className="text-[#94a3b8]">Chargement…</Text>
       </View>
     );
   }
@@ -92,7 +89,6 @@ export default function BookDetailScreen() {
     }
 
     try {
-      // Démarrer l'entrée dans le Store global
       DownloadStore.start({
         bookId: book.id,
         bookTitle: book.title,
@@ -139,95 +135,91 @@ export default function BookDetailScreen() {
   };
 
   const isLocal = !!book.localPath;
-  const catColor = C.muted;
   const downloading = activeDownload?.status === 'downloading' || activeDownload?.status === 'pending';
-  const progressPct = activeDownload ? Math.round(activeDownload.progress * 100) : 0;
-
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
+    <ScrollView className="flex-1 bg-[#0d0f14]" contentContainerStyle={{ paddingBottom: 60 }}>
       {/* Cover header */}
-      <View style={[styles.header, { backgroundColor: catColor + '10' }]}>
-        <View style={[styles.coverBlock, { backgroundColor: catColor + '15', borderColor: catColor + '33', borderWidth: 1 }]}>
+      <View className="h-44 justify-end items-center pb-5 bg-white/5">
+        <View className="w-24 h-32 rounded-2xl justify-center items-center mb-2.5 bg-[#94a3b8]/10 border border-[#94a3b8]/20 overflow-hidden shadow-xl">
           {book.thumbnailMessageId ? (
             <Image 
               source={{ uri: `https://hipster-api.fr/api/telegram/thumbnail/${book.thumbnailMessageId}` }} 
-              style={StyleSheet.absoluteFill}
+              className="absolute inset-0"
               resizeMode="cover"
             />
           ) : (
-            <Text style={[styles.coverLetter, { color: catColor }]}>
+            <Text className="text-5xl font-bold text-[#94a3b8]">
               {book.title.charAt(0).toUpperCase()}
             </Text>
           )}
-          <View style={[styles.formatBadge, { backgroundColor: FormatColors[book.format.toLowerCase()] || FormatColors.unknown }]}>
-            <Text style={styles.formatBadgeText}>{book.format.toUpperCase()}</Text>
+          <View className="absolute bottom-0 right-0 px-2 py-1 rounded-tl-xl bg-[#f97316]">
+            <Text className="text-white text-xs font-black">{book.format.toUpperCase()}</Text>
           </View>
         </View>
-
       </View>
 
-      <View style={styles.body}>
+      <View className="p-5">
         {/* Title & Author */}
-        <Text style={styles.title}>{book.title}</Text>
-        <Text style={styles.author}>{book.author}</Text>
+        <Text className="text-[#ffffff] text-2xl font-bold text-center mt-4">{book.title}</Text>
+        <Text className="text-[#94a3b8] text-sm text-center mt-1 mb-5">{book.author}</Text>
 
         {/* Stats row */}
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.success }} />
-            <Text style={[styles.statValue, { color: C.success }]}>Disponible</Text>
+        <View className="flex-row justify-center items-center bg-[#1a1d24] rounded-2xl p-4 border border-[#2d3139] mb-6">
+          <View className="flex-row items-center gap-2">
+            <View className="w-2 h-2 rounded-full bg-[#10b981]" />
+            <Text className="text-[#10b981] text-sm font-bold">Disponible</Text>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.stat}>
-            <HardDrive size={14} color={C.muted} />
-            <Text style={styles.statValue}>{formatSize(book.fileSize)}</Text>
+          <View className="w-[1] h-5 bg-[#2d3139] mx-4" />
+          <View className="flex-row items-center gap-1.5">
+            <HardDrive size={14} color="#94a3b8" />
+            <Text className="text-white text-sm font-bold">{formatSize(book.fileSize)}</Text>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.stat}>
-            <FileText size={14} color={C.muted} />
-            <Text style={styles.statValue}>{book.format.toUpperCase()}</Text>
+          <View className="w-[1] h-5 bg-[#2d3139] mx-4" />
+          <View className="flex-row items-center gap-1.5">
+            <FileText size={14} color="#94a3b8" />
+            <Text className="text-white text-sm font-bold">{book.format.toUpperCase()}</Text>
           </View>
         </View>
 
         {/* Description */}
         {book.description ? (
-          <>
-            <Text style={styles.sectionTitle}>Résumé</Text>
-            <Text style={styles.description}>{book.description}</Text>
-          </>
+          <View className="mb-6">
+            <Text className="text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider mb-2.5">Résumé</Text>
+            <Text className="text-[#ffffff] text-sm leading-6">{book.description}</Text>
+          </View>
         ) : null}
 
         {/* Metadata table */}
-        <Text style={styles.sectionTitle}>Informations techniques</Text>
-        <View style={styles.metaTable}>
-          <MetaRow icon={<BookOpen size={14} color={C.muted} />} label="Format" value={book.format.toUpperCase()} />
-          <MetaRow icon={<Calendar size={14} color={C.muted} />} label="Parution" value={formatDate(book.addedAt)} />
-          <MetaRow icon={<Book size={14} color={C.muted} />} label="Source" value="Bibliothèque Cloud" />
+        <Text className="text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider mb-2.5">Informations techniques</Text>
+        <View className="bg-[#1a1d24] rounded-2xl border border-[#2d3139] overflow-hidden mb-4">
+          <MetaRow icon={<BookOpen size={14} color="#94a3b8" />} label="Format" value={book.format.toUpperCase()} />
+          <MetaRow icon={<Calendar size={14} color="#94a3b8" />} label="Parution" value={formatDate(book.addedAt)} />
+          <MetaRow icon={<Book size={14} color="#94a3b8" />} label="Source" value="Bibliothèque Cloud" last />
         </View>
 
-        {/* Hash - moins mis en avant */}
-        <Text style={styles.hash}>ID: {book.id.substring(0, 16)}</Text>
+        {/* ID */}
+        <Text className="text-[#94a3b8] text-[10px] text-center mb-6 opacity-50 font-mono">ID: {book.id.substring(0, 16)}</Text>
 
         {/* Action button */}
         {isLocal ? (
           <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: C.success + '15', borderColor: C.success + '33' }]}
+            className="flex-row items-center justify-center gap-2.5 py-4 rounded-2xl bg-[#10b981]/15 border border-[#10b981]/30"
             onPress={() => FileStore.openFile(book.localPath!)}
             activeOpacity={0.8}
           >
-            <CheckCircle size={20} color={C.success} />
-            <Text style={[styles.actionBtnText, { color: C.success }]}>Lire le livre</Text>
+            <CheckCircle size={20} color="#10b981" />
+            <Text className="text-[#10b981] text-base font-bold">Lire le livre</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: C.tint }]}
+            className={`flex-row items-center justify-center gap-2.5 py-4 rounded-2xl bg-[#f97316] ${downloading ? 'opacity-70' : ''}`}
             onPress={handleDownload}
             disabled={downloading}
             activeOpacity={0.8}
           >
             <Download size={20} color="#fff" />
-            <Text style={[styles.actionBtnText, { color: '#fff' }]}>
+            <Text className="text-white text-base font-bold">
               {downloading ? 'Chargement…' : 'Télécharger'}
             </Text>
           </TouchableOpacity>
@@ -237,117 +229,15 @@ export default function BookDetailScreen() {
   );
 }
 
-function MetaRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function MetaRow({ icon, label, value, last }: { icon: React.ReactNode; label: string; value: string, last?: boolean }) {
   return (
-    <View style={styles.metaRow}>
-      <View style={styles.metaLeft}>
+    <View className={`flex-row justify-between items-center px-4 py-3 ${!last ? 'border-b border-[#2d3139]' : ''}`}>
+      <View className="flex-row items-center gap-2">
         {icon}
-        <Text style={styles.metaLabel}>{label}</Text>
+        <Text className="text-[#94a3b8] text-[13px]">{label}</Text>
       </View>
-      <Text style={styles.metaValue}>{value}</Text>
+      <Text className="text-[#ffffff] text-[13px] font-semibold">{value}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  center: { justifyContent: 'center', alignItems: 'center' },
-  header: {
-    height: 180,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 20,
-  },
-  coverBlock: {
-    width: 90,
-    height: 120,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    elevation: 8,
-  },
-  coverLetter: { fontSize: 48, fontWeight: 'bold' },
-  formatBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderTopLeftRadius: 10,
-    borderBottomRightRadius: 11,
-  },
-  formatBadgeText: { color: '#fff', fontSize: 12, fontWeight: '900' },
-  categoryPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  categoryPillText: { fontWeight: '700', fontSize: 12 },
-  body: { padding: 20 },
-  title: { color: C.text, fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginTop: 16 },
-  author: { color: C.muted, fontSize: 14, textAlign: 'center', marginTop: 4, marginBottom: 20 },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: 24,
-  },
-  stat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statValue: { color: C.text, fontSize: 14, fontWeight: '700' },
-  statLabel: { color: C.muted, fontSize: 12 },
-  divider: { width: 1, height: 20, backgroundColor: C.border, marginHorizontal: 16 },
-  sectionTitle: {
-    color: C.muted,
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-  description: { color: C.text, fontSize: 14, lineHeight: 22, marginBottom: 24 },
-  metaTable: {
-    backgroundColor: C.card,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: C.border,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-  },
-  metaLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  metaLabel: { color: C.muted, fontSize: 13 },
-  metaValue: { color: C.text, fontSize: 13, fontWeight: '600' },
-  hash: {
-    color: C.muted,
-    fontSize: 10,
-    fontFamily: 'monospace',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  actionBtnText: { fontSize: 16, fontWeight: 'bold' },
-});

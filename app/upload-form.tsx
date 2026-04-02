@@ -1,20 +1,11 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Upload, Book, User, Tag, FileText } from 'lucide-react-native';
 import { telegramService } from '@/services/telegramService';
 import { MetadataStore } from '@/core/storage/storage';
 import * as FileStoreUtils from '@/core/storage/fileStore';
-
-const C = {
-  bg: '#0d0f14',
-  card: '#1a1d24',
-  tint: '#f97316',
-  text: '#ffffff',
-  muted: '#94a3b8',
-  border: '#2d3139',
-};
 
 const CATEGORIES = [
   "Roman / Fiction",
@@ -49,13 +40,9 @@ export default function UploadForm() {
 
     setIsUploading(true);
     try {
-      // 1. Upload vers Telegram via NestJS API
       const uploadRes = await telegramService.uploadFile(uri, name, category, author, description);
-      
-      // 2. Calcul du hash local pour l'ID unique si besoin
       const hash = await FileStoreUtils.FileStore.calculateHash(uri);
 
-      // 3. Sauvegarde locale des métadonnées
       await MetadataStore.saveBook({
         id: `tg-${uploadRes.messageId || hash}`,
         title,
@@ -82,87 +69,90 @@ export default function UploadForm() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft color={C.text} size={24} />
+    <View className="flex-1 bg-[#0d0f14]">
+      {/* Header */}
+      <View className="pt-14 pb-5 bg-[#1a1d24] flex-row items-center justify-between px-5 border-b border-[#2d3139]">
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 justify-center">
+          <ChevronLeft color="#ffffff" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Détails du document</Text>
-        <View style={{ width: 40 }} />
+        <Text className="text-[#ffffff] text-lg font-bold">Détails du document</Text>
+        <View className="w-10" />
       </View>
 
-      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.section}>
-          <Label icon={<Book size={16} color={C.tint} />} text="Titre du livre" />
+      <ScrollView className="flex-1 p-5" keyboardShouldPersistTaps="handled">
+        {/* Title */}
+        <View className="mb-6">
+          <Label icon={<Book size={16} color="#f97316" />} text="Titre du livre" />
           <TextInput
-            style={styles.input}
+            className="bg-[#1a1d24] rounded-xl p-4 text-[#ffffff] text-base border border-[#2d3139]"
             value={title}
             onChangeText={setTitle}
             placeholder="Ex: Les Misérables"
-            placeholderTextColor={C.muted}
+            placeholderTextColor="#94a3b8"
           />
         </View>
 
-        <View style={styles.section}>
-          <Label icon={<User size={16} color={C.tint} />} text="Auteur" />
+        {/* Author */}
+        <View className="mb-6">
+          <Label icon={<User size={16} color="#f97316" />} text="Auteur" />
           <TextInput
-            style={styles.input}
+            className="bg-[#1a1d24] rounded-xl p-4 text-[#ffffff] text-base border border-[#2d3139]"
             value={author}
             onChangeText={setAuthor}
             placeholder="Ex: Victor Hugo"
-            placeholderTextColor={C.muted}
+            placeholderTextColor="#94a3b8"
           />
         </View>
 
-        <View style={styles.section}>
-          <Label icon={<Tag size={16} color={C.tint} />} text="Catégorie" />
-          <View style={styles.categories}>
+        {/* Category */}
+        <View className="mb-6">
+          <Label icon={<Tag size={16} color="#f97316" />} text="Catégorie" />
+          <View className="flex-row flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <TouchableOpacity
                 key={cat}
                 onPress={() => setCategory(cat)}
-                style={[
-                  styles.catChip,
-                  category === cat && styles.catChipActive
-                ]}
+                className={`px-3 py-2 rounded-full border ${category === cat ? 'bg-[#f97316]/20 border-[#f97316]' : 'bg-[#1a1d24] border-[#2d3139]'}`}
               >
-                <Text style={[
-                  styles.catText,
-                  category === cat && styles.catTextActive
-                ]}>{cat}</Text>
+                <Text className={`text-[13px] ${category === cat ? 'text-[#f97316] font-bold' : 'text-[#94a3b8]'}`}>
+                  {cat}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Label icon={<FileText size={16} color={C.tint} />} text="Description (Optionnel)" />
+        {/* Description */}
+        <View className="mb-6">
+          <Label icon={<FileText size={16} color="#f97316" />} text="Description (Optionnel)" />
           <TextInput
-            style={[styles.input, styles.textArea]}
+            className="bg-[#1a1d24] rounded-xl p-4 text-[#ffffff] text-base border border-[#2d3139] h-24 text-top"
             value={description}
             onChangeText={setDescription}
             placeholder="Un court résumé..."
-            placeholderTextColor={C.muted}
+            placeholderTextColor="#94a3b8"
             multiline
             numberOfLines={4}
           />
         </View>
 
-        <View style={{ height: 40 }} />
+        <View className="h-10" />
       </ScrollView>
 
-      <View style={styles.footer}>
+      {/* Footer */}
+      <View className="p-5 border-t border-[#2d3139] bg-[#0d0f14]">
         <TouchableOpacity 
-          style={[styles.uploadBtn, isUploading && styles.uploadBtnDisabled]} 
+          className={`flex-row h-14 rounded-2xl items-center justify-center gap-2 bg-[#f97316] shadow-lg shadow-[#f97316]/30 ${isUploading ? 'opacity-70' : ''}`}
           onPress={handleUpload}
           disabled={isUploading}
+          activeOpacity={0.8}
         >
           {isUploading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <>
               <Upload size={20} color="#fff" />
-              <Text style={styles.uploadBtnText}>Confirmer & Envoyer</Text>
+              <Text className="text-white text-base font-bold">Confirmer & Envoyer</Text>
             </>
           )}
         </TouchableOpacity>
@@ -173,67 +163,9 @@ export default function UploadForm() {
 
 function Label({ icon, text }: { icon: React.ReactNode, text: string }) {
   return (
-    <View style={styles.labelRow}>
+    <View className="flex-row items-center gap-2 mb-2">
       {icon}
-      <Text style={styles.labelText}>{text}</Text>
+      <Text className="text-[#94a3b8] text-sm font-semibold">{text}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: C.card,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-  },
-  headerTitle: { color: C.text, fontSize: 18, fontWeight: 'bold' },
-  backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  content: { flex: 1, padding: 20 },
-  section: { marginBottom: 24 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  labelText: { color: C.muted, fontSize: 14, fontWeight: '600' },
-  input: {
-    backgroundColor: C.card,
-    borderRadius: 12,
-    padding: 15,
-    color: C.text,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  textArea: { height: 100, textAlignVertical: 'top' },
-  categories: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: C.card,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  catChipActive: { backgroundColor: C.tint + '22', borderColor: C.tint },
-  catText: { color: C.muted, fontSize: 13 },
-  catTextActive: { color: C.tint, fontWeight: 'bold' },
-  footer: { padding: 20, borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.bg },
-  uploadBtn: {
-    backgroundColor: C.tint,
-    flexDirection: 'row',
-    height: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: C.tint,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  uploadBtnDisabled: { opacity: 0.7 },
-  uploadBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-});

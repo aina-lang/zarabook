@@ -15,13 +15,30 @@ import {
   FlatList,
   Image,
   RefreshControl,
-  StyleSheet,
+  ScrollView,
   Text,
-  TextInput, TouchableOpacity,
+  TextInput,
+  TouchableOpacity,
   View
 } from 'react-native';
 const C = Colors.dark;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const CATEGORIES = [
+  "Tous",
+  "Roman / Fiction",
+  "Science-Fiction",
+  "Fantasy",
+  "Policier & Thriller",
+  "Développement Personnel",
+  "Business & Économie",
+  "Informatique & Tech",
+  "Cours & Éducation",
+  "Santé & Bien-être",
+  "Art & Design",
+  "Histoire",
+  "Autre"
+];
 
 function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -39,62 +56,65 @@ function BookCard({
   onDownload: () => void;
   activeDownload?: ActiveDownload | null;
 }) {
-  const catColor = C.muted;
   const isDownloading = activeDownload?.status === 'downloading' || activeDownload?.status === 'pending';
   const progressPct = activeDownload ? Math.round(activeDownload.progress * 100) : 0;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
-      {/* Cover block - plus élégant */}
-      <View style={[styles.cover, { backgroundColor: catColor + '15', borderColor: catColor + '33', borderWidth: 1 }]}>
+    <TouchableOpacity 
+      className="flex-row bg-[#1a1d24] rounded-2xl p-3 mb-2.5 border border-[#2d3139] items-center" 
+      onPress={onPress} 
+      activeOpacity={0.75}
+    >
+      {/* Cover block */}
+      <View className="w-14 h-20 rounded-xl justify-center items-center mr-3 bg-[#f97316]/10 border border-[#f97316]/20 overflow-hidden">
         {item.thumbnailMessageId ? (
           <Image 
             source={{ uri: `https://hipster-api.fr/api/telegram/thumbnail/${item.thumbnailMessageId}` }} 
-            style={StyleSheet.absoluteFill}
+            className="absolute inset-0"
             resizeMode="cover"
           />
         ) : (
-          <Text style={[styles.coverLetter, { color: catColor }]}>
+          <Text className="text-2xl font-bold text-[#f97316]">
             {item.title.charAt(0).toUpperCase()}
           </Text>
         )}
-        <View style={[styles.formatBadge, { backgroundColor: FormatColors[item.format.toLowerCase()] || FormatColors.unknown }]}>
-          <Text style={styles.formatBadgeText}>{item.format.toUpperCase()}</Text>
+        <View className="absolute bottom-0 right-0 px-1.5 py-0.5 rounded-tl-lg bg-[#f97316]">
+          <Text className="text-white text-[9px] font-black">{item.format.toUpperCase()}</Text>
         </View>
       </View>
 
       {/* Info */}
-      <View style={styles.info}>
-        <View style={styles.row}>
-          <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+      <View className="flex-1">
+        <View className="flex-row items-center space-x-2">
+          <Text className="text-white text-sm font-bold flex-1" numberOfLines={2}>{item.title}</Text>
         </View>
 
-        <View style={styles.row}>
-          <Text style={styles.author} numberOfLines={1}>{item.author}</Text>
+        <View className="flex-row items-center space-x-2 mt-0.5">
+          <Text className="text-[#94a3b8] text-xs flex-1" numberOfLines={1}>{item.author}</Text>
           {item.category && (
-            <View style={[styles.categoryChip, { backgroundColor: C.tint + '22', borderColor: C.tint + '44' }]}>
-              <Text style={[styles.categoryText, { color: C.tint }]}>{item.category}</Text>
+            <View className="px-2 py-0.5 rounded-full bg-[#f97316]/10 border border-[#f97316]/20">
+              <Text className="text-[#f97316] text-[10px] font-bold">{item.category}</Text>
             </View>
           )}
         </View>
 
-        <View style={[styles.row, { marginTop: 8 }]}>
-          <View style={styles.stat}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isDownloading ? C.tint : C.success }} />
-            <Text style={[styles.statText, { color: C.muted }]}>
+        <View className="flex-row items-center justify-between mt-2">
+          <View className="flex-row items-center space-x-1">
+            <View className={`w-1.5 h-1.5 rounded-full ${isDownloading ? 'bg-[#f97316]' : 'bg-[#10b981]'}`} />
+            <Text className="text-[#94a3b8] text-[11px] font-semibold">
               {isDownloading ? `Chargement ${progressPct}%` : 'Disponible sur le Cloud'}
             </Text>
           </View>
-          <Text style={styles.size}>{formatSize(item.fileSize)}</Text>
+          <Text className="text-[#94a3b8] text-[11px]">{formatSize(item.fileSize)}</Text>
         </View>
       </View>
 
       {/* Action icon */}
-      <View style={styles.dlBtn}>
+      <View className="p-2.5">
         {item.localPath ? (
-          <CheckCircle size={20} color={C.success} />
+          <CheckCircle size={20} color="#10b981" />
         ) : isDownloading ? (
-          <Text style={{ color: C.tint, fontSize: 12, fontWeight: 'bold' }}>{progressPct}%</Text>
+          <Text className="text-[#f97316] text-xs font-bold">{progressPct}%</Text>
         ) : (
           <TouchableOpacity
             onPress={(e) => {
@@ -102,7 +122,7 @@ function BookCard({
               onDownload();
             }}
           >
-            <Download size={20} color={C.tint} />
+            <Download size={20} color="#f97316" />
           </TouchableOpacity>
         )}
       </View>
@@ -111,10 +131,12 @@ function BookCard({
 }
 
 export default function IndexScreen() {
-  const { showModal } = useModal();
   const { isOffline } = useConnectivity();
+  const { showModal } = useModal();
   const [allBooks, setAllBooks] = useState<BookMetadata[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [activeDownloads, setActiveDownloads] = useState<Record<string, ActiveDownload>>({});
+  const [isUploading, setIsUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
@@ -124,9 +146,7 @@ export default function IndexScreen() {
       setRefreshing(true);
       const response = await fetch("https://hipster-api.fr/api/telegram/list");
       const resData = await response.json();
-      console.log("[Catalog] API Response:", JSON.stringify(resData).substring(0, 200));
-
-      // Adaptation à l'intercepteur NestJS qui enveloppe la réponse dans "data"
+      
       const payload = resData.data || resData;
 
       if (payload.success && payload.files) {
@@ -155,7 +175,6 @@ export default function IndexScreen() {
       }
     } catch (e) {
       console.warn('[Catalog] Error fetching Telegram list:', e);
-      // Fallback local si l'API est hors-ligne
       const bookMap = await MetadataStore.getBooks();
       const remote = Object.values(bookMap).filter(b => !b.localPath);
       remote.sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
@@ -180,7 +199,6 @@ export default function IndexScreen() {
     FileStore.getPublicUri().then(setPublicDir);
     load();
 
-    // Suivre les téléchargements en cours pour mise à jour UI temps réel
     const sub = DownloadStore.subscribe(() => {
       const dls: Record<string, ActiveDownload> = {};
       DownloadStore.getAll().forEach(d => {
@@ -206,7 +224,6 @@ export default function IndexScreen() {
 
     if (!book.telegramMessageId) return;
 
-    // Si pas de dossier public activé, on demande avant de télécharger
     if (!publicDir) {
       showModal({
         type: 'confirm',
@@ -217,7 +234,6 @@ export default function IndexScreen() {
         onConfirm: async () => {
           const uri = await setupStorage();
           if (uri) {
-            // On attend un peu pour que AsyncStorage soit prêt
             setTimeout(() => continueDownload(book), 500);
           }
         },
@@ -241,13 +257,11 @@ export default function IndexScreen() {
       });
 
       const filename = `${book.title.replace(/\s+/g, '_')}.${book.format}`;
-      // On demande le chemin (public ou privé selon conf/Android version)
       const outputPath = await FileStore.getFileUri(filename);
 
       const { telegramService } = require('@/services/telegramService');
       const tempPath = FileSystem.cacheDirectory + filename;
 
-      // Téléchargement vers un dossier temporaire d'abord
       const finalTempUri = await telegramService.downloadFile(
         book.telegramMessageId,
         tempPath,
@@ -256,12 +270,9 @@ export default function IndexScreen() {
         }
       );
 
-      // Déplacement final vers le stockage permanent (public ou privé)
       const finalUri = await FileStore.saveFile(finalTempUri, filename);
-
       DownloadStore.complete(book.id, finalUri);
 
-      // Mettre à jour le stockage et l'UI locale
       const updated = { ...book, localPath: finalUri };
       await MetadataStore.saveBook(updated);
       setAllBooks(prev => prev.map(b => b.id === book.id ? updated : b));
@@ -271,25 +282,6 @@ export default function IndexScreen() {
       DownloadStore.fail(book.id, "Échec");
     }
   };
-
-  const handleDeleteLocal = (book: BookMetadata) => {
-    showModal({
-      type: 'delete',
-      title: 'Supprimer ?',
-      message: `Voulez-vous supprimer "${book.title}" de votre appareil ?`,
-      confirmText: 'Supprimer',
-      onConfirm: async () => {
-        if (book.localPath) {
-          await FileStore.deleteFile(book.localPath);
-        }
-        const updated = { ...book, localPath: undefined };
-        await MetadataStore.saveBook(updated);
-        setAllBooks(prev => prev.map(b => b.id === book.id ? updated : b));
-      }
-    });
-  };
-
-  const [isUploading, setIsUploading] = useState(false);
 
   const importBook = async () => {
     if (isOffline) {
@@ -310,7 +302,6 @@ export default function IndexScreen() {
       if (!result.canceled && result.assets?.length > 0) {
         const file = result.assets[0];
         
-        // Navigation vers le formulaire d'upload avec les infos du fichier
         router.push({
           pathname: '/upload-form',
           params: { 
@@ -338,29 +329,49 @@ export default function IndexScreen() {
 
   const filtered = allBooks.filter(b => {
     const q = search.toLowerCase();
-    return !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
+    const matchesSearch = !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
+    const matchesCategory = selectedCategory === 'Tous' || b.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-[#0d0f14]">
       {/* Search bar */}
-      <View style={styles.searchRow}>
-        <Search size={18} color={C.muted} style={{ marginRight: 8 }} />
+      <View className="flex-row items-center mx-3 mt-3 px-3.5 py-2.5 bg-[#1a1d24] rounded-xl border border-[#2d3139]">
+        <Search size={18} color="#94a3b8" style={{ marginRight: 8 }} />
         <TextInput
-          style={styles.searchInput}
+          className="flex-1 text-[#ffffff] text-[15px]"
           placeholder="Titre, auteur…"
-          placeholderTextColor={C.muted}
+          placeholderTextColor="#94a3b8"
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
+      {/* Categories horizontal scroll */}
+      <View className="mt-3">
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingHorizontal: 12, gap: 8, paddingBottom: 4 }}
+        >
+          {CATEGORIES.map(cat => (
+            <TouchableOpacity
+              key={cat}
+              onPress={() => setSelectedCategory(cat)}
+              className={`px-3.5 py-1.5 rounded-full border ${selectedCategory === cat ? 'bg-[#f97316]/20 border-[#f97316]' : 'bg-[#1a1d24] border-[#2d3139]'}`}
+            >
+              <Text className={`text-[13px] font-semibold ${selectedCategory === cat ? 'text-[#f97316]' : 'text-[#94a3b8]'}`}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* Book list */}
       <FlatList
-        data={allBooks.filter(b => {
-          const q = search.toLowerCase();
-          return !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
-        })}
+        data={filtered}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <BookCard
@@ -371,114 +382,27 @@ export default function IndexScreen() {
           />
         )}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.tint} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>Aucun livre trouvé</Text>
-            <Text style={styles.emptySubtitle}>
+          <View className="mt-20 items-center">
+            <Text className="text-[#ffffff] text-lg font-bold mb-2">Aucun livre trouvé</Text>
+            <Text className="text-[#94a3b8] text-sm text-center px-8">
               {allBooks.length === 0
                 ? 'Le catalogue Cloud (Telegram) est vide ou inaccessible.'
-                : 'Essaie un autre filtre'}
+                : 'Essaie un autre filtre ou une autre catégorie.'}
             </Text>
           </View>
         }
       />
 
-      {/* Floating Action Button pour l'import */}
-      <TouchableOpacity style={styles.fab} onPress={importBook} disabled={isUploading}>
+      {/* Floating Action Button */}
+      <TouchableOpacity 
+        className="absolute bottom-6 right-5 w-14 h-14 rounded-full bg-[#f97316] justify-center items-center elevation-6 shadow-[#f97316] shadow-offset-y-4 shadow-opacity-40 shadow-radius-8"
+        onPress={importBook} 
+        disabled={isUploading}
+      >
         {isUploading ? <ActivityIndicator color="#fff" /> : <Plus size={28} color="#fff" />}
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.background },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: C.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  searchInput: { flex: 1, color: C.text, fontSize: 15 },
-  chips: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.card,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: C.tint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 6,
-    shadowColor: C.tint,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-  },
-  chipActive: { backgroundColor: C.tint + '33', borderColor: C.tint },
-  chipText: { color: C.muted, fontSize: 13, fontWeight: '600' },
-  chipTextActive: { color: C.tint },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: C.card,
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: 'center',
-  },
-  cover: {
-    width: 52,
-    height: 70,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  coverLetter: { fontSize: 26, fontWeight: 'bold' },
-  info: { flex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  categoryChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  categoryText: { fontSize: 10, fontWeight: '700' },
-  formatBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderTopLeftRadius: 6,
-    borderBottomRightRadius: 7, // match cover radius
-  },
-  formatBadgeText: { color: '#fff', fontSize: 9, fontWeight: '900' },
-  title: { color: C.text, fontSize: 14, fontWeight: '700', marginTop: 4, lineHeight: 19 },
-  author: { color: C.muted, fontSize: 12, marginTop: 2 },
-  stat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statText: { fontSize: 11, fontWeight: '600' },
-  size: { color: C.muted, fontSize: 11, marginLeft: 'auto' },
-  dlBtn: { padding: 10 },
-  empty: { marginTop: 80, alignItems: 'center' },
-  emptyTitle: { color: C.text, fontSize: 17, fontWeight: 'bold', marginBottom: 8 },
-  emptySubtitle: { color: C.muted, fontSize: 13, textAlign: 'center', paddingHorizontal: 32 },
-});
