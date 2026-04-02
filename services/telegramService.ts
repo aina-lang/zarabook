@@ -11,9 +11,15 @@ export class TelegramService {
     );
   }
 
-  async uploadFile(fileUri: string, fileName: string, category?: string): Promise<{ messageId: number, thumbnailMessageId?: number }> {
-    console.log(`[TelegramService] Upload de ${fileName} (${category || 'Autre'}) via NestJS API...`);
-
+  async uploadFile(
+    fileUri: string, 
+    fileName: string, 
+    category?: string,
+    author?: string,
+    description?: string
+  ): Promise<{ messageId: number, thumbnailMessageId?: number }> {
+    console.log(`[TelegramService] Upload de ${fileName} (${category || 'Autre'}, Author: ${author}) via NestJS API...`);
+ 
     try {
       const response = await FileSystem.uploadAsync(
         `${NESTJS_URL}/upload`,
@@ -25,6 +31,8 @@ export class TelegramService {
           parameters: {
             name: fileName,
             category: category || 'Autre',
+            author: author || '',
+            description: description || '',
           },
         },
       );

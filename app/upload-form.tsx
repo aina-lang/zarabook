@@ -50,7 +50,7 @@ export default function UploadForm() {
     setIsUploading(true);
     try {
       // 1. Upload vers Telegram via NestJS API
-      const uploadRes = await telegramService.uploadFile(uri, name, category);
+      const uploadRes = await telegramService.uploadFile(uri, name, category, author, description);
       
       // 2. Calcul du hash local pour l'ID unique si besoin
       const hash = await FileStoreUtils.FileStore.calculateHash(uri);
