@@ -2,7 +2,7 @@ import { Colors, FormatColors } from '@/constants/theme';
 import { useConnectivity } from '@/core/context/ConnectivityContext';
 import { useModal } from '@/core/context/ModalContext';
 import { FileStore } from '@/core/storage/fileStore';
-import { BookMetadata, Storage } from '@/core/storage/storage';
+import { BookMetadata, MetadataStore } from '@/core/storage/storage';
 import { ActiveDownload, DownloadStore } from '@/core/store/downloadStore';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -65,8 +65,18 @@ function BookCard({
 
       {/* Info */}
       <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-        <Text style={styles.author} numberOfLines={1}>{item.author}</Text>
+        <View style={styles.row}>
+          <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+        </View>
+
+        <View style={styles.row}>
+          <Text style={styles.author} numberOfLines={1}>{item.author}</Text>
+          {item.category && (
+            <View style={[styles.categoryChip, { backgroundColor: C.tint + '22', borderColor: C.tint + '44' }]}>
+              <Text style={[styles.categoryText, { color: C.tint }]}>{item.category}</Text>
+            </View>
+          )}
+        </View>
 
         <View style={[styles.row, { marginTop: 8 }]}>
           <View style={styles.stat}>
@@ -120,7 +130,7 @@ export default function IndexScreen() {
       const payload = resData.data || resData;
 
       if (payload.success && payload.files) {
-        const localBooks = await Storage.getBooks();
+        const localBooks = await MetadataStore.getBooks();
         const books: BookMetadata[] = payload.files.map((f: any) => {
           const id = `tg-${f.id}`;
           return {
@@ -128,25 +138,24 @@ export default function IndexScreen() {
             telegramMessageId: f.id,
             title: f.fileName.split('.').slice(0, -1).join('.') || f.fileName,
             author: 'Auteur Inconnu',
-
+            category: f.category || 'Autre',
             format: f.fileName.split('.').pop()?.toLowerCase() || 'unknown',
             fileSize: f.fileSize,
             hash: `tg-${f.id}`,
             ownerPeerId: 'cloud-telegram',
             isPublic: true,
             addedAt: f.date * 1000,
-            seedCount: 1,
             localPath: localBooks[id]?.localPath,
             thumbnailMessageId: f.thumbnailMessageId,
           };
         });
-        await Storage.saveBooks(books);
+        await MetadataStore.saveBooks(books);
         setAllBooks(books);
       }
     } catch (e) {
       console.warn('[Catalog] Error fetching Telegram list:', e);
       // Fallback local si l'API est hors-ligne
-      const bookMap = await Storage.getBooks();
+      const bookMap = await MetadataStore.getBooks();
       const remote = Object.values(bookMap).filter(b => !b.localPath);
       remote.sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
       setAllBooks(remote);
@@ -253,7 +262,7 @@ export default function IndexScreen() {
 
       // Mettre à jour le stockage et l'UI locale
       const updated = { ...book, localPath: finalUri };
-      await Storage.saveBook(updated);
+      await MetadataStore.saveBook(updated);
       setAllBooks(prev => prev.map(b => b.id === book.id ? updated : b));
 
     } catch (error) {
@@ -273,7 +282,7 @@ export default function IndexScreen() {
           await FileStore.deleteFile(book.localPath);
         }
         const updated = { ...book, localPath: undefined };
-        await Storage.saveBook(updated);
+        await MetadataStore.saveBook(updated);
         setAllBooks(prev => prev.map(b => b.id === book.id ? updated : b));
       }
     });
@@ -298,57 +307,17 @@ export default function IndexScreen() {
       });
 
       if (!result.canceled && result.assets?.length > 0) {
-        setIsUploading(true);
         const file = result.assets[0];
-        const hash = await FileStore.calculateHash(file.uri);
-        const name = file.name;
-
-        // Upload vers le Cloud (Telegram)
-        const { telegramService } = require('@/services/telegramService');
-        let telegramMessageId: number | undefined;
-        let thumbMsgId: number | undefined;
         
-        try {
-          const uploadRes = await telegramService.uploadFile(file.uri, name);
-          telegramMessageId = uploadRes.messageId;
-          thumbMsgId = uploadRes.thumbnailMessageId;
-        } catch (tgError) {
-          console.error("[Catalog] Erreur upload:", tgError);
-        }
-
-        const newBook: BookMetadata = {
-          id: `tg-${telegramMessageId || hash}`,
-          telegramMessageId,
-          title: name.replace(/\.[^/.]+$/, ''),
-          author: 'Auteur Inconnu',
-          // category: 'Autre',
-          format: name.split('.').pop()?.toLowerCase() || 'unknown',
-          fileSize: file.size ?? 0,
-          hash: hash,
-          ownerPeerId: 'me',
-          isPublic: true,
-          addedAt: Date.now(),
-          seedCount: 1,
-          thumbnailMessageId: thumbMsgId,
-        };
-
-        if (telegramMessageId) {
-          showModal({
-            type: 'success',
-            title: 'Livre Ajouté',
-            message: `"${newBook.title}" est maintenant disponible dans votre bibliothèque Cloud.`
-          });
-        } else {
-          showModal({
-            type: 'error',
-            title: 'Échec Upload',
-            message: "Le livre n'a pas pu être sauvegardé sur le Cloud, mais il reste disponible pour lecture."
-          });
-        }
-
-        await Storage.saveBook(newBook);
-        await load();
-        setIsUploading(false);
+        // Navigation vers le formulaire d'upload avec les infos du fichier
+        router.push({
+          pathname: '/upload-form',
+          params: { 
+            uri: file.uri, 
+            name: file.name, 
+            size: file.size ? file.size.toString() : '0' 
+          }
+        });
       }
     } catch (err) {
       setIsUploading(false);

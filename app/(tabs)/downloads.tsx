@@ -6,7 +6,7 @@ import { useModal } from '@/core/context/ModalContext';
 import { Colors, FormatColors } from '@/constants/theme';
 import { CheckCircle, Download, XCircle, AlertCircle, Loader, Trash2, Library } from 'lucide-react-native';
 import { DownloadStore, ActiveDownload } from '@/core/store/downloadStore';
-import { Storage, BookMetadata } from '@/core/storage/storage';
+import { MetadataStore, BookMetadata } from '@/core/storage/storage';
 import { useRouter } from 'expo-router';
 import { FileStore } from '@/core/storage/fileStore';
 
@@ -55,10 +55,17 @@ function DownloadCard({ item, onRemove }: { item: ActiveDownload; onRemove: () =
         </View>
         <View style={styles.info}>
           <Text style={styles.title} numberOfLines={1}>{item.bookTitle}</Text>
-          <Text style={styles.meta}>
-            {cfg.label}
-            {item.status === 'downloading' && ` — ${formatSize(item.bytesReceived)} / ${formatSize(item.bookSize)}`}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <Text style={styles.meta}>{cfg.label}</Text>
+            {item.category && (
+              <View style={[styles.categoryChip, { backgroundColor: C.tint + '15', borderColor: C.tint + '33' }]}>
+                <Text style={styles.categoryText}>{item.category}</Text>
+              </View>
+            )}
+          </View>
+          {item.status === 'downloading' && (
+            <Text style={styles.meta}>{formatSize(item.bytesReceived)} / {formatSize(item.bookSize)}</Text>
+          )}
         </View>
         <Text style={[styles.pct, { color: cfg.color }]}>
           {item.status === 'completed' ? '✓' : `${pct}%`}
@@ -101,7 +108,15 @@ function LocalBookCard({ item, onPress, onDelete }: { item: BookMetadata, onPres
         </View>
         <View style={styles.info}>
           <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.meta}>{item.author} • {formatSize(item.fileSize)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+            <Text style={styles.meta}>{item.author}</Text>
+            {item.category && (
+              <View style={[styles.categoryChip, { backgroundColor: C.tint + '15', borderColor: C.tint + '33' }]}>
+                <Text style={styles.categoryText}>{item.category}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.meta}>{formatSize(item.fileSize)} • {item.format.toUpperCase()}</Text>
         </View>
         <TouchableOpacity style={styles.trashBtn} onPress={onDelete}>
           <Trash2 size={18} color={C.error} />
@@ -121,7 +136,7 @@ export default function DownloadsScreen() {
     setActive(DownloadStore.getAll().filter(d => d.status === 'pending' || d.status === 'downloading' || d.status === 'error'));
     
     // Téléchargés
-    const bookMap = await Storage.getBooks();
+    const bookMap = await MetadataStore.getBooks();
     const downloaded = Object.values(bookMap)
       .filter(b => !!b.localPath)
       .sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
@@ -131,13 +146,13 @@ export default function DownloadsScreen() {
   useEffect(() => {
     load();
     const sub1 = DownloadStore.subscribe(load);
-    const sub2 = Storage.subscribe(load);
+    const sub2 = MetadataStore.subscribe(load);
     return () => { sub1(); sub2(); };
   }, []);
 
   const handleRemove = async (bookId: string) => {
+    // Supprimer l'entrée du store de téléchargement (mémoire)
     DownloadStore.remove(bookId);
-    await Storage.deleteDownload(bookId);
     load();
   };
 
@@ -155,7 +170,7 @@ export default function DownloadsScreen() {
           await FileStore.deleteFile(book.localPath);
         }
         const updated = { ...book, localPath: undefined };
-        await Storage.saveBook(updated);
+        await MetadataStore.saveBook(updated);
         load();
       }
     });
@@ -241,6 +256,13 @@ const styles = StyleSheet.create({
   info: { flex: 1 },
   title: { color: C.text, fontSize: 14, fontWeight: '700' },
   meta: { color: C.muted, fontSize: 11, marginTop: 2 },
+  categoryChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  categoryText: { fontSize: 10, fontWeight: '700', color: C.tint },
   pct: { fontSize: 13, fontWeight: 'bold' },
   progressBg: {
     height: 4,

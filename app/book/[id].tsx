@@ -1,6 +1,6 @@
 import { Colors, FormatColors } from '@/constants/theme';
 import { useModal } from '@/core/context/ModalContext';
-import { BookMetadata, Storage } from '@/core/storage/storage';
+import { BookMetadata, MetadataStore } from '@/core/storage/storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Book,
@@ -50,8 +50,8 @@ export default function BookDetailScreen() {
 
   const load = React.useCallback(async () => {
     if (id) {
-      const b = await Storage.getBook(id);
-      setBook(b);
+      const b = await MetadataStore.getBook(id);
+      setBook(b || null);
       const dl = DownloadStore.get(id);
       setActiveDownload(dl || null);
     }
@@ -60,7 +60,7 @@ export default function BookDetailScreen() {
   useEffect(() => {
     load();
     const sub1 = DownloadStore.subscribe(load);
-    const sub2 = Storage.subscribe(load);
+    const sub2 = MetadataStore.subscribe(load);
     return () => { sub1(); sub2(); };
   }, [id, load]);
 
@@ -119,7 +119,7 @@ export default function BookDetailScreen() {
       DownloadStore.complete(book.id, finalUri);
 
       const newBook = { ...book, localPath: finalUri };
-      await Storage.saveBook(newBook);
+      await MetadataStore.saveBook(newBook);
       setBook(newBook);
 
       showModal({

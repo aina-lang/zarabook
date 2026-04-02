@@ -11,20 +11,20 @@ export class TelegramService {
     );
   }
 
-  async uploadFile(fileUri: string, fileName: string): Promise<number> {
-    console.log(`[TelegramService] Upload de ${fileName} via NestJS API...`);
+  async uploadFile(fileUri: string, fileName: string, category?: string): Promise<{ messageId: number, thumbnailMessageId?: number }> {
+    console.log(`[TelegramService] Upload de ${fileName} (${category || 'Autre'}) via NestJS API...`);
 
     try {
-      // expo-file-system uploadAsync is very efficient for large PDFs
       const response = await FileSystem.uploadAsync(
         `${NESTJS_URL}/upload`,
         fileUri,
         {
           fieldName: "file",
           httpMethod: "POST",
-          uploadType: 1 as any, // FileSystemUploadType.MULTIPART is 1
+          uploadType: 1 as any, 
           parameters: {
             name: fileName,
+            category: category || 'Autre',
           },
         },
       );
@@ -50,7 +50,7 @@ export class TelegramService {
       console.log(
         `[TelegramService] Upload réussi! Message ID: ${uploadData.messageId}`,
       );
-      return uploadData.messageId;
+      return uploadData;
     } catch (err) {
       console.error("[TelegramService] Echec de l'upload via l'API: ", err);
       throw err;

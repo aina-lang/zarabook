@@ -15,6 +15,7 @@ export interface ActiveDownload {
   status: DownloadStatus;
   startedAt: number;
   format?: string;
+  category?: string;
   thumbnailMessageId?: number;
   error?: string;
   localPath?: string;

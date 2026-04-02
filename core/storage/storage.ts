@@ -1,29 +1,20 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface BookMetadata {
-  id: string; // SHA-256 hash
+  id: string; // SHA-256 hash ou tg-ID
   title: string;
   author: string;
+  category?: string;
   description?: string;
   language?: string;
-  format: string; // pdf, epub, mp4, mp3, jpg...
+  format: string; // pdf, epub, mp4, mp3...
   fileSize: number;
   hash: string;
   thumbnailMessageId?: number;
-  ownerPeerId: string;
-  isPublic: boolean;
   localPath?: string;
-  telegramMessageId?: number; // ← Ajouté pour Telegram
-  addedAt: number; // timestamp ms
-  seedCount?: number; // nb de seeders annoncés via GossipSub
-  coverColor?: string; // couleur hex générée depuis le hash
-}
-
-export interface PeerInfo {
-  id: string;
-  multiaddrs: string[];
-  lastSeen: number;
-  bookCount?: number; // livres seedés par ce pair
+  telegramMessageId?: number;
+  addedAt: number; 
+  coverColor?: string; 
 }
 
 export type DownloadStatus =
@@ -33,109 +24,81 @@ export type DownloadStatus =
   | "error"
   | "cancelled";
 
-export interface DownloadEntry {
-  bookId: string;
-  bookTitle: string;
-  bookSize: number;
-  fromPeerId: string;
-  progress: number; // 0.0 → 1.0
-  status: DownloadStatus;
-  startedAt: number;
-  completedAt?: number;
-  error?: string;
-  localPath?: string;
-}
+const BOOKS_KEY = "bookmesh_books";
+type Listener = () => void;
 
-const KEYS = {
-  BOOKS: "bookmesh_books",
-  PEERS: "bookmesh_peers",
-  DOWNLOADS: "bookmesh_downloads",
-  MY_PEER_ID: "bookmesh_my_peer_id",
-};
+export const MetadataStore = {
+  listeners: new Set<Listener>(),
 
-type StorageListener = () => void;
-const listeners = new Set<StorageListener>();
-
-export const Storage = {
-  subscribe(listener: StorageListener) {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
+  subscribe(listener: Listener): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
   },
 
-  privateNotify() {
-    listeners.forEach((l) => l());
-  },
-  // ─── Books ───────────────────────────────────────────────
-  async saveBook(book: BookMetadata) {
-    const books = await this.getBooks();
-    const updatedBooks = { ...books, [book.id]: book };
-    await AsyncStorage.setItem(KEYS.BOOKS, JSON.stringify(updatedBooks));
-    this.privateNotify();
+  notify() {
+    this.listeners.forEach(l => l());
   },
 
-  async saveBooks(newBooks: BookMetadata[]) {
-    const books = await this.getBooks();
-    let updated = { ...books };
-    newBooks.forEach((b) => {
-      updated[b.id] = b;
-    });
-    await AsyncStorage.setItem(KEYS.BOOKS, JSON.stringify(updated));
-    this.privateNotify();
+  async saveBook(book: BookMetadata): Promise<void> {
+    const books = await this.getAllBooks();
+    const index = books.findIndex((b) => b.id === book.id);
+    if (index > -1) {
+      books[index] = book;
+    } else {
+      books.push(book);
+    }
+    await AsyncStorage.setItem(BOOKS_KEY, JSON.stringify(books));
+    this.notify();
   },
 
-  async getBooks(): Promise<Record<string, BookMetadata>> {
-    const data = await AsyncStorage.getItem(KEYS.BOOKS);
-    return data ? JSON.parse(data) : {};
-  },
-
-  async getBook(id: string): Promise<BookMetadata | null> {
-    const books = await this.getBooks();
-    return books[id] || null;
-  },
-
-  async deleteBook(id: string) {
-    const books = await this.getBooks();
-    delete books[id];
-    await AsyncStorage.setItem(KEYS.BOOKS, JSON.stringify(books));
-    this.privateNotify();
-  },
-
-  // ─── Peers ───────────────────────────────────────────────
-  async savePeer(peer: PeerInfo) {
-    const peers = await this.getPeers();
-    const updatedPeers = { ...peers, [peer.id]: peer };
-    await AsyncStorage.setItem(KEYS.PEERS, JSON.stringify(updatedPeers));
-  },
-
-  async getPeers(): Promise<Record<string, PeerInfo>> {
-    const data = await AsyncStorage.getItem(KEYS.PEERS);
-    return data ? JSON.parse(data) : {};
-  },
-
-  // ─── Downloads ───────────────────────────────────────────
-  async saveDownload(entry: DownloadEntry) {
-    const downloads = await this.getDownloads();
-    const updated = { ...downloads, [entry.bookId]: entry };
-    await AsyncStorage.setItem(KEYS.DOWNLOADS, JSON.stringify(updated));
-  },
-
-  async getDownloads(): Promise<Record<string, DownloadEntry>> {
-    const data = await AsyncStorage.getItem(KEYS.DOWNLOADS);
-    return data ? JSON.parse(data) : {};
-  },
-
-  async updateDownload(bookId: string, partial: Partial<DownloadEntry>) {
-    const downloads = await this.getDownloads();
-    if (downloads[bookId]) {
-      downloads[bookId] = { ...downloads[bookId], ...partial };
-      await AsyncStorage.setItem(KEYS.DOWNLOADS, JSON.stringify(downloads));
+  async getAllBooks(): Promise<BookMetadata[]> {
+    try {
+      const data = await AsyncStorage.getItem(BOOKS_KEY);
+      if (!data) return [];
+      const parsed = JSON.parse(data);
+      
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        // Migration de l'ancien format (Map/Object) vers Array
+        return Object.values(parsed) as BookMetadata[];
+      }
+      
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.warn("[MetadataStore] Error in getAllBooks:", e);
+      return [];
     }
   },
 
-  async deleteDownload(bookId: string) {
-    const downloads = await this.getDownloads();
-    delete downloads[bookId];
-    await AsyncStorage.setItem(KEYS.DOWNLOADS, JSON.stringify(downloads));
-    this.privateNotify();
+  async getBook(id: string): Promise<BookMetadata | undefined> {
+    const books = await this.getAllBooks();
+    return books.find((b) => b.id === id);
+  },
+
+  async deleteBook(id: string): Promise<void> {
+    const books = await this.getAllBooks();
+    const filtered = books.filter((b) => b.id !== id);
+    await AsyncStorage.setItem(BOOKS_KEY, JSON.stringify(filtered));
+    this.notify();
+  },
+
+  async saveBooks(books: BookMetadata[]): Promise<void> {
+    const existing = await this.getAllBooks();
+    const map = new Map(existing.map(b => [b.id, b]));
+    books.forEach(b => map.set(b.id, b));
+    await AsyncStorage.setItem(BOOKS_KEY, JSON.stringify(Array.from(map.values())));
+    this.notify();
+  },
+
+  async getBooks(): Promise<Record<string, BookMetadata>> {
+    const all = await this.getAllBooks();
+    return all.reduce((acc, b) => {
+      acc[b.id] = b;
+      return acc;
+    }, {} as Record<string, BookMetadata>);
+  },
+
+  async clearAll(): Promise<void> {
+    await AsyncStorage.removeItem(BOOKS_KEY);
+    this.notify();
   },
 };

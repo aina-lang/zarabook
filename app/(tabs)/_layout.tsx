@@ -67,7 +67,7 @@ export default function TabLayout() {
         options={{
           title: 'Explorer',
           tabBarIcon: ({ color }) => <Globe size={22} color={color} />,
-          headerTitle: '📚 BookMesh',
+          headerTitle: 'BookMesh',
         }}
       />
       <Tabs.Screen
