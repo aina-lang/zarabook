@@ -7,6 +7,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { useTranslation } from '@/core/i18n/I18nContext';
 import { SocketService } from '@/core/services/socketService';
+import * as Notifications from 'expo-notifications';
 
 import Constants from 'expo-constants';
 
@@ -32,6 +33,20 @@ export function UpdateBanner({ onUpdateFound }: { onUpdateFound?: () => void }) 
       if (UpdateService.isNewerVersion(CURRENT_VERSION, data.version)) {
         setUpdate(data);
         if (onUpdateFound) onUpdateFound();
+
+        // Envoi d'une notification push native
+        Notifications.requestPermissionsAsync().then(({ status }) => {
+          if (status === 'granted') {
+            Notifications.scheduleNotificationAsync({
+              content: {
+                title: "Mise à jour disponible 🚀",
+                body: `La nouvelle version ${data.version} de ZaraBook est prête à être installée.`,
+                data: { downloadUrl: data.downloadUrl },
+              },
+              trigger: null, // Immédiat
+            });
+          }
+        });
       }
     });
 

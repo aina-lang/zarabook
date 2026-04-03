@@ -15,6 +15,17 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { TransitionOverlay } from '@/components/TransitionOverlay';
 import { CustomSplashScreen } from '@/components/CustomSplashScreen';
 import { SocketService } from '@/core/services/socketService';
+import * as Notifications from 'expo-notifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 // Empêche l'auto-hide du splash natif
 SplashScreen.preventAutoHideAsync().catch(() => {});
