@@ -68,7 +68,7 @@ export default function IndexScreen() {
     }
     try {
       setRefreshing(true);
-      const response = await fetch('https://hipster-api.fr/api/telegram/list');
+      const response = await fetch('https://zarabook-api.onrender.com/telegram/list');
       const resData = await response.json();
       const payload = resData.data || resData;
       if (payload.success && payload.files) {

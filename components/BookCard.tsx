@@ -118,7 +118,7 @@ export function BookCard({
         >
           {thumbnailMessageId && item ? (
             <Animated.Image
-              source={{ uri: `https://hipster-api.fr/api/telegram/thumbnail/${thumbnailMessageId}` }}
+              source={{ uri: `https://zarabook-api.onrender.com/telegram/thumbnail/${thumbnailMessageId}` }}
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
               resizeMode="cover"
               // @ts-ignore - Reanimated 3+ Shared Element prop

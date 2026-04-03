@@ -14,7 +14,7 @@ export class UpdateService {
    */
   static async checkUpdate(currentVersion: string): Promise<AppUpdateData | null> {
     try {
-      const resp = await fetch('https://hipster-api.fr/api/telegram/app-update/latest');
+      const resp = await fetch('https://zarabook-api.onrender.com/telegram/app-update/latest');
       if (!resp.ok) return null;
       
       const json = await resp.json();

@@ -1,7 +1,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 
 // URL de l'API en production
-const NESTJS_URL = "https://hipster-api.fr/api/telegram";
+const NESTJS_URL = "https://zarabook-api.onrender.com/telegram";
 
 export class TelegramService {
   async init() {

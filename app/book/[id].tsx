@@ -266,7 +266,7 @@ export default function BookDetailScreen() {
           ]}>
             {book?.thumbnailMessageId && book ? (
               <Animated.Image 
-                source={{ uri: `https://hipster-api.fr/api/telegram/thumbnail/${book.thumbnailMessageId}` }} 
+                source={{ uri: `https://zarabook-api.onrender.com/telegram/thumbnail/${book.thumbnailMessageId}` }} 
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} 
                 resizeMode="cover" 
                 // @ts-ignore - Reanimated 3+ Shared Element prop
@@ -401,7 +401,7 @@ function HeroBackground({ color, thumbnailMessageId }: { color: string, thumbnai
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: HERO_HEIGHT + 150, backgroundColor: color }}>
       {thumbnailMessageId && (
         <Image 
-          source={{ uri: `https://hipster-api.fr/api/telegram/thumbnail/${thumbnailMessageId}` }} 
+          source={{ uri: `https://zarabook-api.onrender.com/telegram/thumbnail/${thumbnailMessageId}` }} 
           style={{ width: '100%', height: '100%', opacity: 0.35 }} 
           blurRadius={20}
         />
