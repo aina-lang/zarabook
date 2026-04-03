@@ -44,13 +44,7 @@ function RootLayoutContent() {
       // Masquer le splash natif dès que le custom est prêt à s'afficher
       SplashScreen.hideAsync().catch(() => {});
     }
-
-    if (isReady && !showSplash && hasOnboarded !== null) {
-      if (!hasOnboarded) {
-        router.replace('/onboarding');
-      }
-    }
-  }, [isReady, showSplash, hasOnboarded]);
+  }, [showSplash]);
 
   // Affichage du splash custom (utilisé aussi comme loading)
   if (showSplash || !isReady || hasOnboarded === null) {
@@ -68,6 +62,7 @@ function RootLayoutContent() {
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
       <ConnectivityBanner />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen
