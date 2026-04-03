@@ -74,7 +74,6 @@ export function CustomSplashScreen({ onFinish, isDataReady }: Props) {
           style={styles.logoImage}
           contentFit="contain"
         />
-        <Animated.Text style={[styles.title, { color: colors.text }]}>ZaraBook</Animated.Text>
       </Animated.View>
     </Animated.View>
   );

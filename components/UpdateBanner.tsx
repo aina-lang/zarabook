@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Download, AlertCircle, CheckCircle, Smartphone } from 'lucide-react-native';
+import { Download, AlertCircle, CheckCircle, Smartphone, Pause, Play, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/core/context/ThemeContext';
 import { UpdateService, AppUpdateData } from '@/core/services/updateService';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { useTranslation } from '@/core/i18n/I18nContext';
 import { SocketService } from '@/core/services/socketService';
-import * as Notifications from 'expo-notifications';
 
 import Constants from 'expo-constants';
 
@@ -16,8 +15,9 @@ export function UpdateBanner({ onUpdateFound }: { onUpdateFound?: () => void }) 
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [update, setUpdate] = useState<AppUpdateData | null>(null);
-  const [status, setStatus] = useState<'idle' | 'downloading' | 'ready' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'downloading' | 'paused' | 'ready' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
+  const downloadResumableRef = useRef<FileSystem.DownloadResumable | null>(null);
 
   useEffect(() => {
     // 1. Vérification initiale REST
@@ -33,20 +33,6 @@ export function UpdateBanner({ onUpdateFound }: { onUpdateFound?: () => void }) 
       if (UpdateService.isNewerVersion(CURRENT_VERSION, data.version)) {
         setUpdate(data);
         if (onUpdateFound) onUpdateFound();
-
-        // Envoi d'une notification push native
-        Notifications.requestPermissionsAsync().then(({ status }) => {
-          if (status === 'granted') {
-            Notifications.scheduleNotificationAsync({
-              content: {
-                title: "Mise à jour disponible 🚀",
-                body: `La nouvelle version ${data.version} de ZaraBook est prête à être installée.`,
-                data: { downloadUrl: data.downloadUrl },
-              },
-              trigger: null, // Immédiat
-            });
-          }
-        });
       }
     });
 
@@ -55,26 +41,35 @@ export function UpdateBanner({ onUpdateFound }: { onUpdateFound?: () => void }) 
     };
   }, []);
 
-  const handleDownload = async () => {
+  const startOrResumeDownload = async (isResume = false) => {
     if (!update?.downloadUrl) return;
     setStatus('downloading');
+    
     try {
-      const filename = `ZaraBook_Update_${update.version}.apk`;
-      const tempPath = FileSystem.cacheDirectory + filename;
+      let downloadResumable = downloadResumableRef.current;
       
-      const downloadResumable = FileSystem.createDownloadResumable(
-        update.downloadUrl,
-        tempPath,
-        {},
-        (dlProgress) => {
-          if (dlProgress.totalBytesExpectedToWrite > 0) {
-            const pct = dlProgress.totalBytesWritten / dlProgress.totalBytesExpectedToWrite;
-            setProgress(pct);
+      if (!isResume || !downloadResumable) {
+        const filename = `ZaraBook_Update_${update.version}.apk`;
+        const tempPath = FileSystem.cacheDirectory + filename;
+        
+        downloadResumable = FileSystem.createDownloadResumable(
+          update.downloadUrl,
+          tempPath,
+          {},
+          (dlProgress) => {
+            if (dlProgress.totalBytesExpectedToWrite > 0) {
+              const pct = dlProgress.totalBytesWritten / dlProgress.totalBytesExpectedToWrite;
+              setProgress(pct);
+            }
           }
-        }
-      );
+        );
+        downloadResumableRef.current = downloadResumable;
+      }
 
-      const result = await downloadResumable.downloadAsync();
+      const result = isResume 
+        ? await downloadResumable.resumeAsync() 
+        : await downloadResumable.downloadAsync();
+        
       if (result && result.uri) {
         setStatus('ready');
         try {
@@ -95,6 +90,22 @@ export function UpdateBanner({ onUpdateFound }: { onUpdateFound?: () => void }) 
       setStatus('error');
     }
   };
+
+  const handleDownload = () => startOrResumeDownload(false);
+
+  const pauseDownload = async () => {
+    if (downloadResumableRef.current && status === 'downloading') {
+      try {
+        await downloadResumableRef.current.pauseAsync();
+        setStatus('paused');
+      } catch (e) {
+        console.error("Pause failed:", e);
+      }
+    }
+  };
+
+  const resumeDownload = () => startOrResumeDownload(true);
+  const retryDownload = () => startOrResumeDownload(false);
 
   if (!update || status === 'ready') return null;
 
@@ -124,11 +135,24 @@ export function UpdateBanner({ onUpdateFound }: { onUpdateFound?: () => void }) 
               </TouchableOpacity>
             )}
             
-            {status === 'downloading' && (
+            {(status === 'downloading' || status === 'paused') && (
               <View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text style={{ color: colors.textDim, fontSize: 12 }}>{t('components.updateDownloading')}</Text>
-                  <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{Math.round(progress * 100)}%</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={{ color: colors.textDim, fontSize: 12 }}>
+                    {status === 'paused' ? (t('components.updatePaused') || 'En pause') : t('components.updateDownloading')}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{Math.round(progress * 100)}%</Text>
+                    {status === 'downloading' ? (
+                      <TouchableOpacity onPress={pauseDownload} activeOpacity={0.7} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                        <Pause size={16} color={colors.primary} />
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity onPress={resumeDownload} activeOpacity={0.7} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                        <Play size={16} color={colors.primary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
                 <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 99, overflow: 'hidden' }}>
                   <View style={{ width: `${progress * 100}%`, height: '100%', backgroundColor: colors.primary, borderRadius: 99 }} />
@@ -137,9 +161,15 @@ export function UpdateBanner({ onUpdateFound }: { onUpdateFound?: () => void }) 
             )}
             
             {status === 'error' && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <AlertCircle size={14} color="#ef4444" />
-                <Text style={{ color: '#ef4444', fontSize: 12 }}>{t('components.updateError')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <AlertCircle size={14} color="#ef4444" />
+                  <Text style={{ color: '#ef4444', fontSize: 12 }}>{t('components.updateError')}</Text>
+                </View>
+                <TouchableOpacity onPress={retryDownload} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ef444420', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                  <RefreshCw size={12} color="#ef4444" />
+                  <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>{t('common.retry') || 'Réessayer'}</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>

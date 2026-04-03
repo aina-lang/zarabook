@@ -9,9 +9,14 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { useRouter } from 'expo-router';
 import { CheckCircle, Download, Plus, Search, Sun, Moon, Globe, Wifi, Settings, WifiOff, Library } from 'lucide-react-native';
 import { OfflineView } from '@/components/OfflineView';
-import { UpdateBanner } from '@/components/UpdateBanner';
 import { BookCard } from '@/components/BookCard';
+import { UpdateBanner } from '@/components/UpdateBanner';
 import { useTranslation } from '@/core/i18n/I18nContext';
+import { SocketService } from '@/core/services/socketService';
+import { UpdateService, AppUpdateData } from '@/core/services/updateService';
+import Constants from 'expo-constants';
+
+const CURRENT_VERSION = Constants.expoConfig?.version || (Constants as any).manifest?.version || '1.0.0';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -103,11 +108,11 @@ export default function IndexScreen() {
           };
         });
 
-        if (books.length < limit) {
+        if (payload.nextOffsetId !== undefined && payload.nextOffsetId !== null) {
+          setHasMore(true);
+          setOffsetId(payload.nextOffsetId);
+        } else {
           setHasMore(false);
-        }
-        if (books.length > 0) {
-          setOffsetId(books[books.length - 1].telegramMessageId!);
         }
 
         const allFetched = reset ? books : [...allBooks, ...books];
@@ -144,14 +149,31 @@ export default function IndexScreen() {
     FileStore.getPublicUri().then(setPublicDir);
     setHasMore(true);
     load(true);
+
+    if (!isOffline) {
+      UpdateService.checkUpdate(CURRENT_VERSION).then(res => {
+        if (res) setHasUpdate(true);
+      });
+    }
+
     const sub = DownloadStore.subscribe(() => {
       const dls: Record<string, ActiveDownload> = {};
       DownloadStore.getAll().forEach((d) => { dls[d.bookId] = d; });
       setActiveDownloads(dls);
       setWifiOnly(DownloadStore.getDownloadMode() === 'wifi');
     });
-    return () => sub();
-  }, [load]);
+
+    const socketSub = SocketService.subscribeToAppUpdates((data: AppUpdateData) => {
+      if (UpdateService.isNewerVersion(CURRENT_VERSION, data.version)) {
+        setHasUpdate(true);
+      }
+    });
+
+    return () => {
+      sub();
+      socketSub();
+    };
+  }, [load, isOffline]);
 
   // Connectivity monitoring for auto-pause
   useEffect(() => {
@@ -311,11 +333,11 @@ export default function IndexScreen() {
             style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
           >
             <Settings size={20} color={colors.primary} />
-            {hasUpdate && (
+            {/* {hasUpdate && (
               <View style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#ef4444', width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.background }}>
                 <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>1</Text>
               </View>
-            )}
+            )} */}
           </TouchableOpacity>
         </View>
       </View>
@@ -387,16 +409,7 @@ export default function IndexScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-
-      {/* ── Section header ── */}
-      {!isOffline && allBooks.length > 0 && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 12, paddingBottom: 6 }}>
-          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>{t('index.allBooks')}</Text>
-          <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>
-            {t('index.filesCount', { count: filtered.length })}
-          </Text>
-        </View>
-      )}
+<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: 5, paddingBottom: 6 }}/>
 
       {/* ── Book list / Offline ── */}
       {isOffline ? (
@@ -429,6 +442,12 @@ export default function IndexScreen() {
             loadingMore ? (
               <View style={{ padding: 20, alignItems: 'center' }}>
                 <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : (!hasMore && allBooks.length > 0) ? (
+              <View style={{ padding: 20, alignItems: 'center', paddingBottom: 40 }}>
+                <Text style={{ color: colors.textDim, fontSize: 12, fontWeight: '500' }}>
+                  {t('index.noMoreData') || 'Plus de livres disponibles'}
+                </Text>
               </View>
             ) : null
           }

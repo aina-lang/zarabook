@@ -9,6 +9,7 @@ import { FileStore } from '@/core/storage/fileStore';
 import { useModal } from '@/core/context/ModalContext';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useTranslation } from '@/core/i18n/I18nContext';
+import { UpdateBanner } from '@/components/UpdateBanner';
 
 export default function SettingsScreen() {
   const { theme, colors, toggleTheme, isDark } = useTheme();
@@ -123,6 +124,7 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+        <UpdateBanner />
         
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8, marginTop: 10 }}>{t('settings.appearance')}</Text>
         <View style={{ backgroundColor: colors.card + '20', borderRadius: 20, paddingHorizontal: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>

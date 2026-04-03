@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { useTheme } from '@/core/context/ThemeContext';
 import { useTranslation } from '@/core/i18n/I18nContext';
 import { 
@@ -226,6 +227,11 @@ export default function OnboardingScreen() {
   }).current;
 
   const onFinish = async () => {
+    try {
+      await Notifications.requestPermissionsAsync();
+    } catch (e) {
+      console.log('Permission request failed', e);
+    }
     await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
     router.replace('/(tabs)');
   };

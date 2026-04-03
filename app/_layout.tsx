@@ -15,7 +15,9 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { TransitionOverlay } from '@/components/TransitionOverlay';
 import { CustomSplashScreen } from '@/components/CustomSplashScreen';
 import { SocketService } from '@/core/services/socketService';
+import { UpdateService, AppUpdateData } from '@/core/services/updateService';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -97,7 +99,26 @@ export default function RootLayout() {
     // Connexion permanente au webhook Push Notification OTA
     SocketService.init();
 
+    const unsubscribe = SocketService.subscribeToAppUpdates((data: AppUpdateData) => {
+      const CURRENT_VERSION = Constants.expoConfig?.version || (Constants as any).manifest?.version || '1.0.0';
+      if (UpdateService.isNewerVersion(CURRENT_VERSION, data.version)) {
+        Notifications.requestPermissionsAsync().then(({ status }) => {
+          if (status === 'granted') {
+            Notifications.scheduleNotificationAsync({
+              content: {
+                title: "Mise à jour disponible 🚀",
+                body: `La nouvelle version ${data.version} de ZaraBook est prête à être installée.`,
+                data: { downloadUrl: data.downloadUrl },
+              },
+              trigger: null,
+            });
+          }
+        });
+      }
+    });
+
     return () => {
+      unsubscribe();
       SocketService.disconnect();
     };
   }, []);
