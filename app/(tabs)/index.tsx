@@ -53,16 +53,33 @@ export default function IndexScreen() {
   const { t } = useTranslation();
 
   const [allBooks, setAllBooks] = useState<BookMetadata[]>([]);
+  const allBooksRef = useRef<BookMetadata[]>([]);
+  
+  useEffect(() => {
+    allBooksRef.current = allBooks;
+  }, [allBooks]);
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeDownloads, setActiveDownloads] = useState<Record<string, ActiveDownload>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [offsetId, setOffsetId] = useState(0);
+  const offsetIdRef = useRef(0);
   const [hasMore, setHasMore] = useState(true);
+  const hasMoreRef = useRef(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [publicDir, setPublicDir] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fabAnim = useRef(new Animated.Value(1)).current;
@@ -74,15 +91,23 @@ export default function IndexScreen() {
       setRefreshing(false);
       return;
     }
-    const currentOffset = reset ? 0 : offsetId;
-    if (!reset && !hasMore) return;
+    const currentOffset = reset ? 0 : offsetIdRef.current;
+    if (!reset && !hasMoreRef.current) return;
 
     try {
       if (reset) setRefreshing(true);
       else setLoadingMore(true);
 
       const limit = 20;
-      const response = await fetch(`https://zarabook-api.onrender.com/telegram/list?limit=${limit}&offsetId=${currentOffset}`);
+      const baseUrl = 'https://zarabook-api.onrender.com/telegram/list';
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        offsetId: currentOffset.toString(),
+      });
+      if (debouncedSearch) params.append('search', debouncedSearch);
+      if (selectedCategory !== 'all') params.append('category', selectedCategory);
+
+      const response = await fetch(`${baseUrl}?${params.toString()}`);
       const resData = await response.json();
       const payload = resData.data || resData;
 
@@ -110,13 +135,15 @@ export default function IndexScreen() {
 
         if (payload.nextOffsetId !== undefined && payload.nextOffsetId !== null) {
           setHasMore(true);
+          hasMoreRef.current = true;
           setOffsetId(payload.nextOffsetId);
+          offsetIdRef.current = payload.nextOffsetId;
         } else {
           setHasMore(false);
+          hasMoreRef.current = false;
         }
 
-        const allFetched = reset ? books : [...allBooks, ...books];
-        // Deduplication au cas où Telegram renvoie des ID chevauchés
+        const allFetched = reset ? books : [...allBooksRef.current, ...books];
         const uniqueBooks = Array.from(new Map(allFetched.map(b => [b.id, b])).values());
 
         await MetadataStore.saveBooks(uniqueBooks);
@@ -129,17 +156,19 @@ export default function IndexScreen() {
         remote.sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
         setAllBooks(remote);
       }
-    } finally {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [isOffline, offsetId, hasMore, allBooks]);
+  }, [isOffline, debouncedSearch, selectedCategory]);
 
   const setupStorage = async (): Promise<string | null> => {
     const uri = await FileStore.requestDirectory();
     if (uri) {
       setPublicDir(uri);
       setHasMore(true);
+      hasMoreRef.current = true;
+      setOffsetId(0);
+      offsetIdRef.current = 0;
       await load(true);
     }
     return uri;
@@ -148,6 +177,9 @@ export default function IndexScreen() {
   useEffect(() => {
     FileStore.getPublicUri().then(setPublicDir);
     setHasMore(true);
+    hasMoreRef.current = true;
+    setOffsetId(0);
+    offsetIdRef.current = 0;
     load(true);
 
     if (!isOffline) {
@@ -292,12 +324,7 @@ export default function IndexScreen() {
     }
   };
 
-  const filtered = allBooks.filter((b) => {
-    const q = search.toLowerCase();
-    const matchesSearch = !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
-    const matchesCategory = selectedCategory === 'all' || b.category === CATEGORY_MAP[selectedCategory];
-    return matchesSearch && matchesCategory;
-  });
+  const filtered = allBooks;
 
   const downloadedCount = allBooks.filter((b) => b.localPath).length;
 
