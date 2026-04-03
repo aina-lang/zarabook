@@ -7,8 +7,8 @@ services/catalogService.ts(44,11): error TS2571: Object is of type 'unknown'.
 services/transferProtocol.ts(4,10): error TS2305: Module '"uint8arrays/from-string"' has no exported member 'uint8ArrayFromString'.
 services/transferProtocol.ts(5,10): error TS2305: Module '"uint8arrays/to-string"' has no exported member 'uint8ArrayToString'.
 services/transferProtocol.ts(19,47): error TS2339: Property 'stream' does not exist on type 'Stream'.
-services/transferProtocol.ts(30,38): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("/home/mercia/PROJETS/MOBILE/bookmesh/node_modules/expo-file-system/build/index")'.
+services/transferProtocol.ts(30,38): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("/home/mercia/PROJETS/MOBILE/ZaraBook/node_modules/expo-file-system/build/index")'.
 services/transferProtocol.ts(45,49): error TS2345: Argument of type 'string' is not assignable to parameter of type 'PeerId | Multiaddr | Multiaddr[]'.
 services/transferProtocol.ts(56,9): error TS2345: Argument of type 'Stream' is not assignable to parameter of type 'PipeTransform<any[], any>'.
-services/transferProtocol.ts(68,30): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("/home/mercia/PROJETS/MOBILE/bookmesh/node_modules/expo-file-system/build/index")'.
+services/transferProtocol.ts(68,30): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("/home/mercia/PROJETS/MOBILE/ZaraBook/node_modules/expo-file-system/build/index")'.
 services/transferProtocol.ts(69,9): error TS2353: Object literal may only specify known properties, and 'append' does not exist in type 'WritingOptions'.

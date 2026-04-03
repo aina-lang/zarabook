@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Switch, ActivityIndicator, Linking } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { ChevronLeft, Moon, Sun, Wifi, Globe, Github, Info, Bell, Shield, Database, FolderOpen, Layers, Smartphone, Plus, Minus, Mail, GraduationCap, MessageCircle } from 'lucide-react-native';
-import { useTheme } from '@/core/context/ThemeContext';
-import { DownloadStore, DownloadMode } from '@/core/store/downloadStore';
-import { FileStore } from '@/core/storage/fileStore';
-import { useModal } from '@/core/context/ModalContext';
-import * as FileSystem from 'expo-file-system/legacy';
-import { useTranslation } from '@/core/i18n/I18nContext';
 import { UpdateBanner } from '@/components/UpdateBanner';
+import { useModal } from '@/core/context/ModalContext';
+import { useTheme } from '@/core/context/ThemeContext';
+import { useTranslation } from '@/core/i18n/I18nContext';
+import { FileStore } from '@/core/storage/fileStore';
+import { DownloadMode, DownloadStore } from '@/core/store/downloadStore';
+import * as FileSystem from 'expo-file-system/legacy';
+import { useRouter } from 'expo-router';
+import { ChevronLeft, Database, FolderOpen, Github, Globe, GraduationCap, Info, Layers, Mail, MessageCircle, Minus, Moon, Plus, Shield, Smartphone, Sun, Wifi } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Linking, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const { theme, colors, toggleTheme, isDark } = useTheme();
@@ -74,8 +74,8 @@ export default function SettingsScreen() {
   };
 
   const SettingRow = ({ icon, label, children, description }: { icon: React.ReactNode, label: string, children: React.ReactNode, description?: string }) => (
-    <View style={{ 
-      paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border 
+    <View style={{
+      paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -93,11 +93,11 @@ export default function SettingsScreen() {
   const OptionGroup = ({ options, current, onSelect }: { options: { label: string, value: any, icon?: any }[], current: any, onSelect: (v: any) => void }) => (
     <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderRadius: 12, padding: 4, gap: 4, marginTop: 10 }}>
       {options.map(opt => (
-        <TouchableOpacity 
-          key={String(opt.value)} 
+        <TouchableOpacity
+          key={String(opt.value)}
           onPress={() => onSelect(opt.value)}
-          style={{ 
-            flex: 1, paddingVertical: 8, borderRadius: 8, 
+          style={{
+            flex: 1, paddingVertical: 8, borderRadius: 8,
             backgroundColor: current === opt.value ? colors.primary : 'transparent',
             alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6
           }}
@@ -112,8 +112,8 @@ export default function SettingsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View style={{ 
-        paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: 16, 
+      <View style={{
+        paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: 16,
         flexDirection: 'row', alignItems: 'center', gap: 16,
         borderBottomWidth: 1, borderBottomColor: colors.border
       }}>
@@ -125,23 +125,23 @@ export default function SettingsScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
         <UpdateBanner />
-        
+
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8, marginTop: 10 }}>{t('settings.appearance')}</Text>
         <View style={{ backgroundColor: colors.card + '20', borderRadius: 20, paddingHorizontal: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
-          <SettingRow 
-            icon={isDark ? <Moon size={18} color={colors.primary} /> : <Sun size={18} color={colors.primary} />} 
+          <SettingRow
+            icon={isDark ? <Moon size={18} color={colors.primary} /> : <Sun size={18} color={colors.primary} />}
             label={t('settings.darkMode')}
           >
-            <Switch 
-              value={isDark} 
-              onValueChange={toggleTheme} 
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
               trackColor={{ false: '#334155', true: colors.primary + '80' }}
               thumbColor={isDark ? colors.primary : '#f1f5f9'}
             />
           </SettingRow>
 
-          <SettingRow 
-            icon={<Globe size={18} color={colors.primary} />} 
+          <SettingRow
+            icon={<Globe size={18} color={colors.primary} />}
             label={t('settings.language')}
           >
             <View style={{ flexDirection: 'row', gap: 4, backgroundColor: colors.card, padding: 2, borderRadius: 10 }}>
@@ -151,13 +151,13 @@ export default function SettingsScreen() {
                 { code: 'mg', flag: '🇲🇬' },
                 { code: 'de', flag: '🇩🇪' }
               ].map((lang) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={lang.code}
                   onPress={() => setLocale(lang.code as any)}
-                  style={{ 
-                    paddingHorizontal: 8, 
-                    paddingVertical: 5, 
-                    borderRadius: 8, 
+                  style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 8,
                     backgroundColor: locale === lang.code ? colors.primary : 'transparent',
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -174,10 +174,10 @@ export default function SettingsScreen() {
 
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8 }}>{t('settings.downloads')}</Text>
         <View style={{ backgroundColor: colors.card + '20', borderRadius: 20, paddingHorizontal: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
-          
+
           <SettingRow icon={<FolderOpen size={18} color={colors.primary} />} label={t('settings.targetFolder')} description={publicDir ? publicDir.split('/').pop() : t('settings.notConfigured')}>
             <TouchableOpacity onPress={handleRequestDir} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: colors.primary + '15' }}>
-                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>{t('settings.change')}</Text>
+              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>{t('settings.change')}</Text>
             </TouchableOpacity>
           </SettingRow>
 
@@ -189,16 +189,16 @@ export default function SettingsScreen() {
                 </View>
                 <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }}>{t('settings.maxConcurrent')}</Text>
               </View>
-              
+
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 4 }}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => handleMaxChange(Math.max(1, maxConcurrent - 1))}
                   style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
                 >
                   <Minus size={16} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', minWidth: 20, textAlign: 'center' }}>{maxConcurrent}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => handleMaxChange(Math.min(10, maxConcurrent + 1))}
                   style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}
                 >
@@ -215,7 +215,7 @@ export default function SettingsScreen() {
               </View>
               <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }}>{t('settings.dataMode')}</Text>
             </View>
-            <OptionGroup 
+            <OptionGroup
               current={downloadMode}
               onSelect={handleModeChange}
               options={[
@@ -231,15 +231,15 @@ export default function SettingsScreen() {
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8 }}>{t('settings.securityCache')}</Text>
         <View style={{ backgroundColor: colors.card + '20', borderRadius: 20, paddingHorizontal: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
           <SettingRow icon={<Database size={18} color={colors.textDim} />} label={t('settings.clearCache')} description={t('settings.clearCacheDesc')}>
-             <TouchableOpacity 
-              onPress={handleClearCache} 
+            <TouchableOpacity
+              onPress={handleClearCache}
               disabled={isCleaning}
               style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: colors.border }}
-             >
-                {isCleaning ? <ActivityIndicator size="small" color={colors.text} /> : <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>{t('settings.clearBtn')}</Text>}
-             </TouchableOpacity>
+            >
+              {isCleaning ? <ActivityIndicator size="small" color={colors.text} /> : <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>{t('settings.clearBtn')}</Text>}
+            </TouchableOpacity>
           </SettingRow>
-         </View>
+        </View>
 
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8 }}>{t('settings.aboutDev')}</Text>
         <View style={{ backgroundColor: colors.card + '20', borderRadius: 20, paddingHorizontal: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
@@ -336,7 +336,7 @@ export default function SettingsScreen() {
             onPress={() => showModal({
               type: 'info',
               title: 'API Telegram',
-              message: 'BookMesh utilise l\'API officielle de Telegram pour le stockage et le partage de fichiers.\n\nConformément aux Conditions d\'Utilisation de Telegram (Terms of Service), cette application :\n• N\'est pas affiliée à Telegram Messenger Inc.\n• Utilise l\'API à des fins non-commerciales et personnelles\n• Respecte les limitations de taux (rate limits) imposées par Telegram\n\nPour plus d\'informations : https://core.telegram.org/api/terms',
+              message: 'ZaraBook utilise l\'API officielle de Telegram pour le stockage et le partage de fichiers.\n\nConformément aux Conditions d\'Utilisation de Telegram (Terms of Service), cette application :\n• N\'est pas affiliée à Telegram Messenger Inc.\n• Utilise l\'API à des fins non-commerciales et personnelles\n• Respecte les limitations de taux (rate limits) imposées par Telegram\n\nPour plus d\'informations : https://core.telegram.org/api/terms',
             })}
             style={{ paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >

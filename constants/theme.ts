@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 
-// BookMesh — YGG-style dark tracker palette
+// ZaraBook — YGG-style dark tracker palette
 export const Colors = {
   light: {
     text: "#E1E1E6",
@@ -32,8 +32,6 @@ export const Colors = {
   },
 };
 
-
- 
 export const FormatColors: Record<string, string> = {
   pdf: "#FF453A", // Red
   epub: "#BF5AF2", // Purple
