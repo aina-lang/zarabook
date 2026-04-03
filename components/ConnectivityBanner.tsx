@@ -5,11 +5,13 @@ import { BlurView } from 'expo-blur';
 import { WifiOff } from 'lucide-react-native';
 import { useConnectivity } from '@/core/context/ConnectivityContext';
 import { Colors } from '@/constants/theme';
+import { useTranslation } from '@/core/i18n/I18nContext';
 
 const C = Colors.dark;
 
 export const ConnectivityBanner = () => {
   const { isOffline } = useConnectivity();
+  const { t } = useTranslation();
 
   if (!isOffline) return null;
 
@@ -25,7 +27,7 @@ export const ConnectivityBanner = () => {
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 159, 10, 0.15)' }]} />
       )}
       <WifiOff size={14} color={C.warning} />
-      <Text style={styles.text}>Mode Hors-ligne — Certaines fonctions sont limitées</Text>
+      <Text style={styles.text}>{t('components.offlineBanner')}</Text>
     </Animated.View>
   );
 };

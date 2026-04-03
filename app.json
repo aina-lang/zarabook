@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "bookmesh",
-    "slug": "bookmesh",
+    "name": "zarabook",
+    "slug": "zarabook",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "bookmesh",
+    "scheme": "zarabook",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.maminiaina-mercia.bookmesh"
+      "bundleIdentifier": "com.maminiaina-mercia.zarabook"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.maminiaina_mercia.bookmesh"
+      "package": "com.maminiaina_mercia.zarabook"
     },
     "web": {
       "output": "static",
@@ -41,7 +41,8 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

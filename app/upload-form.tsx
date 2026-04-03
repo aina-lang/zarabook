@@ -1,53 +1,52 @@
-
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Animated } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useModal } from '@/core/context/ModalContext';
+import { useTheme } from '@/core/context/ThemeContext';
 import { ChevronLeft, Upload, Book, User, Tag, FileText } from 'lucide-react-native';
 import { telegramService } from '@/services/telegramService';
 import { MetadataStore } from '@/core/storage/storage';
-import * as FileStoreUtils from '@/core/storage/fileStore';
+import { FileStore } from '@/core/storage/fileStore';
+import { useTranslation } from '@/core/i18n/I18nContext';
+import { CATEGORY_MAP } from '@/core/utils/categoryUtils';
 
-const CATEGORIES = [
-  "Roman / Fiction",
-  "Science-Fiction",
-  "Fantasy",
-  "Policier & Thriller",
-  "Développement Personnel",
-  "Business & Économie",
-  "Informatique & Tech",
-  "Cours & Éducation",
-  "Santé & Bien-être",
-  "Art & Design",
-  "Histoire",
-  "Autre"
-];
+
 
 export default function UploadForm() {
+  const { showModal } = useModal();
+  const { colors, theme } = useTheme();
+  const { t } = useTranslation();
   const { uri, name, size } = useLocalSearchParams() as { uri: string; name: string; size: string };
   const router = useRouter();
 
   const [title, setTitle] = useState(name.split('.').slice(0, -1).join('.') || name);
   const [author, setAuthor] = useState('');
-  const [category, setCategory] = useState('Autre');
+  const [category, setCategory] = useState('other');
   const [description, setDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [titleFocused, setTitleFocused] = useState(false);
+  const [authorFocused, setAuthorFocused] = useState(false);
+  
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handleUpload = async () => {
     if (!title.trim()) {
-      Alert.alert("Erreur", "Veuillez entrer un titre.");
+      showModal({ type: 'error', title: t('upload.errorTitle'), message: t('upload.errorMsg') });
       return;
     }
 
+    Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
     setIsUploading(true);
     try {
-      const uploadRes = await telegramService.uploadFile(uri, name, category, author, description);
-      const hash = await FileStoreUtils.FileStore.calculateHash(uri);
+      const displayCategory = (CATEGORY_MAP as any)[category] || category;
+      const uploadRes = await telegramService.uploadFile(uri, name, displayCategory, author, description);
+      const hash = await FileStore.calculateHash(uri);
 
       await MetadataStore.saveBook({
         id: `tg-${uploadRes.messageId || hash}`,
         title,
-        author: author || 'Auteur inconnu',
-        category,
+        author: author || t('upload.unknownAuthor'),
+        category: displayCategory,
         description,
         format: name.split('.').pop()?.toLowerCase() || 'unknown',
         fileSize: parseInt(size, 10) || 0,
@@ -55,117 +54,121 @@ export default function UploadForm() {
         telegramMessageId: uploadRes.messageId,
         thumbnailMessageId: uploadRes.thumbnailMessageId,
         addedAt: Date.now(),
-        coverColor: '#' + Math.floor(Math.random()*16777215).toString(16),
       });
 
-      Alert.alert("Succès", "Fichier ajouté au catalogue !");
+      showModal({ type: 'success', title: t('common.success'), message: t('upload.successMsg') });
       router.replace('/(tabs)');
     } catch (error) {
-      console.error("[UploadForm] Erreur:", error);
-      Alert.alert("Erreur", "Échec de l'upload. Veuillez réessayer.");
+      showModal({ type: 'error', title: t('upload.errorTitle'), message: t('upload.uploadError') });
     } finally {
       setIsUploading(false);
+      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
     }
   };
 
   return (
-    <View className="flex-1 bg-[#0d0f14]">
-      {/* Header */}
-      <View className="pt-14 pb-5 bg-[#1a1d24] flex-row items-center justify-between px-5 border-b border-[#2d3139]">
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 justify-center">
-          <ChevronLeft color="#ffffff" size={24} />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 50, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}
+        >
+          <ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text className="text-[#ffffff] text-lg font-bold">Détails du document</Text>
-        <View className="w-10" />
+        <View>
+          <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginBottom: 2 }}>{t('upload.details')}</Text>
+          <Text style={{ color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.5 }}>{t('upload.title')}</Text>
+        </View>
       </View>
 
-      <ScrollView className="flex-1 p-5" keyboardShouldPersistTaps="handled">
-        {/* Title */}
-        <View className="mb-6">
-          <Label icon={<Book size={16} color="#f97316" />} text="Titre du livre" />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled">
+        <View style={{ marginBottom: 24 }}>
+          <Label icon={<Book size={14} color={colors.primary} />} text={t('upload.bookTitle')} />
           <TextInput
-            className="bg-[#1a1d24] rounded-xl p-4 text-[#ffffff] text-base border border-[#2d3139]"
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Ex: Les Misérables"
-            placeholderTextColor="#94a3b8"
+            style={{ 
+              backgroundColor: colors.input, borderRadius: 14, padding: 16, color: colors.text, fontSize: 15, 
+              borderWidth: 1, borderColor: titleFocused ? colors.primary : colors.border 
+            }}
+            value={title} onChangeText={setTitle} onFocus={() => setTitleFocused(true)} onBlur={() => setTitleFocused(false)}
+            placeholder={t('upload.placeholderTitle')} placeholderTextColor={colors.textMuted}
           />
         </View>
 
-        {/* Author */}
-        <View className="mb-6">
-          <Label icon={<User size={16} color="#f97316" />} text="Auteur" />
+        <View style={{ marginBottom: 24 }}>
+          <Label icon={<User size={14} color={colors.primary} />} text={t('upload.author')} />
           <TextInput
-            className="bg-[#1a1d24] rounded-xl p-4 text-[#ffffff] text-base border border-[#2d3139]"
-            value={author}
-            onChangeText={setAuthor}
-            placeholder="Ex: Victor Hugo"
-            placeholderTextColor="#94a3b8"
+            style={{ 
+              backgroundColor: colors.input, borderRadius: 14, padding: 16, color: colors.text, fontSize: 15,
+              borderWidth: 1, borderColor: authorFocused ? colors.primary : colors.border
+            }}
+            value={author} onChangeText={setAuthor} onFocus={() => setAuthorFocused(true)} onBlur={() => setAuthorFocused(false)}
+            placeholder={t('upload.placeholderAuthor')} placeholderTextColor={colors.textMuted}
           />
         </View>
 
-        {/* Category */}
-        <View className="mb-6">
-          <Label icon={<Tag size={16} color="#f97316" />} text="Catégorie" />
-          <View className="flex-row flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
+        <View style={{ marginBottom: 24 }}>
+          <Label icon={<Tag size={14} color={colors.primary} />} text={t('upload.category')} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {Object.keys(CATEGORY_MAP).map((catKey) => (
               <TouchableOpacity
-                key={cat}
-                onPress={() => setCategory(cat)}
-                className={`px-3 py-2 rounded-full border ${category === cat ? 'bg-[#f97316]/20 border-[#f97316]' : 'bg-[#1a1d24] border-[#2d3139]'}`}
+                key={catKey} onPress={() => setCategory(catKey)}
+                style={{
+                  paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1,
+                  backgroundColor: category === catKey ? colors.primary + '20' : colors.card,
+                  borderColor: category === catKey ? colors.primary : colors.border
+                }}
               >
-                <Text className={`text-[13px] ${category === cat ? 'text-[#f97316] font-bold' : 'text-[#94a3b8]'}`}>
-                  {cat}
-                </Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: category === catKey ? colors.primary : colors.textDim }}>{t(`categories.${catKey}`)}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Description */}
-        <View className="mb-6">
-          <Label icon={<FileText size={16} color="#f97316" />} text="Description (Optionnel)" />
+        <View style={{ marginBottom: 24 }}>
+          <Label icon={<FileText size={14} color={colors.primary} />} text={t('upload.summary')} />
           <TextInput
-            className="bg-[#1a1d24] rounded-xl p-4 text-[#ffffff] text-base border border-[#2d3139] h-24 text-top"
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Un court résumé..."
-            placeholderTextColor="#94a3b8"
-            multiline
-            numberOfLines={4}
+            style={{ 
+              backgroundColor: colors.input, borderRadius: 14, padding: 16, color: colors.text, fontSize: 15,
+              borderWidth: 1, borderColor: colors.border, height: 120, textAlignVertical: 'top'
+            }}
+            value={description} onChangeText={setDescription}
+            placeholder={t('upload.placeholderSummary')} placeholderTextColor={colors.textMuted}
+            multiline numberOfLines={4}
           />
         </View>
-
-        <View className="h-10" />
       </ScrollView>
 
-      {/* Footer */}
-      <View className="p-5 border-t border-[#2d3139] bg-[#0d0f14]">
-        <TouchableOpacity 
-          className={`flex-row h-14 rounded-2xl items-center justify-center gap-2 bg-[#f97316] shadow-lg shadow-[#f97316]/30 ${isUploading ? 'opacity-70' : ''}`}
-          onPress={handleUpload}
-          disabled={isUploading}
-          activeOpacity={0.8}
-        >
-          {isUploading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Upload size={20} color="#fff" />
-              <Text className="text-white text-base font-bold">Confirmer & Envoyer</Text>
-            </>
-          )}
-        </TouchableOpacity>
+      <View style={{ padding: 24, paddingBottom: 40, borderTopWidth: 1, borderTopColor: colors.border }}>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity 
+            style={{ 
+              height: 56, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', 
+              flexDirection: 'row', gap: 10, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
+              opacity: isUploading ? 0.7 : 1
+            }}
+            onPress={handleUpload} disabled={isUploading} activeOpacity={0.8}
+          >
+            {isUploading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Upload size={20} color="#fff" strokeWidth={2.5} />
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>{t('upload.submit')}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
       </View>
     </View>
   );
 }
 
 function Label({ icon, text }: { icon: React.ReactNode, text: string }) {
+  const { colors } = useTheme();
   return (
-    <View className="flex-row items-center gap-2 mb-2">
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, marginLeft: 4 }}>
       {icon}
-      <Text className="text-[#94a3b8] text-sm font-semibold">{text}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>{text.toUpperCase()}</Text>
     </View>
   );
 }

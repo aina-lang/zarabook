@@ -3,24 +3,37 @@ import NetInfo from '@react-native-community/netinfo';
 
 interface ConnectivityContextType {
   isOffline: boolean;
+  isWifi: boolean;
+  connectionType: string | null;
 }
 
-const ConnectivityContext = createContext<ConnectivityContextType>({ isOffline: false });
+const ConnectivityContext = createContext<ConnectivityContextType>({
+  isOffline: false,
+  isWifi: false,
+  connectionType: null,
+});
 
 export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isOffline, setIsOffline] = useState(false);
+  const [status, setStatus] = useState<ConnectivityContextType>({
+    isOffline: false,
+    isWifi: false,
+    connectionType: null,
+  });
 
   useEffect(() => {
     const removeSubscription = NetInfo.addEventListener((state) => {
-      const offline = state.isConnected === false;
-      setIsOffline(offline);
+      setStatus({
+        isOffline: state.isConnected === false,
+        isWifi: state.type === 'wifi',
+        connectionType: state.type,
+      });
     });
 
     return () => removeSubscription();
   }, []);
 
   return (
-    <ConnectivityContext.Provider value={{ isOffline }}>
+    <ConnectivityContext.Provider value={status}>
       {children}
     </ConnectivityContext.Provider>
   );

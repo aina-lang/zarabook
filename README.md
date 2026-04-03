@@ -1,11 +1,11 @@
-# 📚 BookMesh
+# 📚 ZaraBook
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Expo](https://img.shields.io/badge/Expo-React%20Native-black)
 ![P2P](https://img.shields.io/badge/network-P2P-green)
 ![Status](https://img.shields.io/badge/status-Development-orange)
 
-**BookMesh** est une application mobile de **bibliothèque décentralisée P2P** permettant de partager des livres et documents directement entre utilisateurs.
+**ZaraBook** est une application mobile de **bibliothèque décentralisée P2P** permettant de partager des livres et documents directement entre utilisateurs.
 
 Les livres sont **hébergés sur les appareils des utilisateurs** et échangés via un réseau **pair-à-pair**, sans stockage centralisé.
 

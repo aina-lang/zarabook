@@ -69,39 +69,30 @@ export class TelegramService {
     messageId: number, 
     outputPath: string, 
     onProgress?: (progress: number, bytesDownloaded: number, totalBytes: number) => void
-  ): Promise<string> {
+  ): Promise<FileSystem.DownloadResumable> {
     console.log(
       `[TelegramService] Téléchargement du message ID ${messageId} depuis NestJS API...`,
     );
  
-    try {
-      const url = `${NESTJS_URL}/download/${messageId}`;
-      
-      const downloadResumable = FileSystem.createDownloadResumable(
-        url,
-        outputPath,
-        {},
-        (downloadProgress) => {
-          const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-          if (onProgress) {
-            onProgress(
-              progress, 
-              downloadProgress.totalBytesWritten, 
-              downloadProgress.totalBytesExpectedToWrite
-            );
-          }
+    const url = `${NESTJS_URL}/download/${messageId}`;
+    
+    const resumable = FileSystem.createDownloadResumable(
+      url,
+      outputPath,
+      {},
+      (downloadProgress) => {
+        const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+        if (onProgress) {
+          onProgress(
+            progress, 
+            downloadProgress.totalBytesWritten, 
+            downloadProgress.totalBytesExpectedToWrite
+          );
         }
-      );
- 
-      const result = await downloadResumable.downloadAsync();
-      if (!result) throw new Error("Échec du téléchargement (interrompu)");
-      
-      console.log(`[TelegramService] Document sauvegardé dans : ${result.uri}`);
-      return result.uri;
-    } catch (err) {
-      console.error("[TelegramService] Echec du téléchargement: ", err);
-      throw err;
-    }
+      }
+    );
+
+    return resumable;
   }
 }
 

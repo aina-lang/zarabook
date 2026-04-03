@@ -12,6 +12,9 @@ export interface BookMetadata {
   hash: string;
   thumbnailMessageId?: number;
   localPath?: string;
+  ownerPeerId?: string;
+  isPublic?: boolean;
+  seedCount?: number;
   telegramMessageId?: number;
   addedAt: number; 
   coverColor?: string; 
@@ -24,7 +27,7 @@ export type DownloadStatus =
   | "error"
   | "cancelled";
 
-const BOOKS_KEY = "bookmesh_books";
+const BOOKS_KEY = "zarabook_books";
 type Listener = () => void;
 
 export const MetadataStore = {
@@ -101,4 +104,10 @@ export const MetadataStore = {
     await AsyncStorage.removeItem(BOOKS_KEY);
     this.notify();
   },
+
+  async saveDownload(book: BookMetadata): Promise<void> {
+    await this.saveBook(book);
+  },
 };
+
+export const Storage = MetadataStore;

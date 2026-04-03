@@ -2,9 +2,9 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const PRIVATE_BOOKS_DIR = `${FileSystem.documentDirectory}BookMesh/`;
-const PUBLIC_BOOKS_DIR_ANDROID = '/storage/emulated/0/Download/BookMesh/';
-const STORAGE_KEY = 'bookmesh_public_dir_uri';
+const PRIVATE_BOOKS_DIR = `${FileSystem.documentDirectory}ZaraBook/`;
+const PUBLIC_BOOKS_DIR_ANDROID = '/storage/emulated/0/Download/ZaraBook/';
+const STORAGE_KEY = 'zarabook_public_dir_uri';
 
 export const FileStore = {
   async getPublicUri(): Promise<string | null> {

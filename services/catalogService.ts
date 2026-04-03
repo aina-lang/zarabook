@@ -3,7 +3,7 @@ import { Storage, BookMetadata } from '../core/storage/storage';
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string';
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string';
 
-const CATALOG_TOPIC = 'bookmesh/catalog/1.0.0';
+const CATALOG_TOPIC = 'zarabook/catalog/1.0.0';
 
 type CatalogMessage =
   | { type: 'announce'; book: BookMetadata }
