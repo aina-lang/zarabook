@@ -53,6 +53,9 @@ export default function IndexScreen() {
   const [isUploading, setIsUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [offsetId, setOffsetId] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [publicDir, setPublicDir] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const router = useRouter();
@@ -61,16 +64,23 @@ export default function IndexScreen() {
 
   const [wifiOnly, setWifiOnly] = useState(DownloadStore.getDownloadMode() === 'wifi');
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (reset = false) => {
     if (isOffline) {
       setRefreshing(false);
       return;
     }
+    const currentOffset = reset ? 0 : offsetId;
+    if (!reset && !hasMore) return;
+
     try {
-      setRefreshing(true);
-      const response = await fetch('https://zarabook-api.onrender.com/telegram/list');
+      if (reset) setRefreshing(true);
+      else setLoadingMore(true);
+
+      const limit = 20;
+      const response = await fetch(`https://zarabook-api.onrender.com/telegram/list?limit=${limit}&offsetId=${currentOffset}`);
       const resData = await response.json();
       const payload = resData.data || resData;
+
       if (payload.success && payload.files) {
         const localBooks = await MetadataStore.getBooks();
         const books: BookMetadata[] = payload.files.map((f: any) => {
@@ -92,31 +102,48 @@ export default function IndexScreen() {
             thumbnailMessageId: f.thumbnailMessageId,
           };
         });
-        await MetadataStore.saveBooks(books);
-        setAllBooks(books);
+
+        if (books.length < limit) {
+          setHasMore(false);
+        }
+        if (books.length > 0) {
+          setOffsetId(books[books.length - 1].telegramMessageId!);
+        }
+
+        const allFetched = reset ? books : [...allBooks, ...books];
+        // Deduplication au cas où Telegram renvoie des ID chevauchés
+        const uniqueBooks = Array.from(new Map(allFetched.map(b => [b.id, b])).values());
+
+        await MetadataStore.saveBooks(uniqueBooks);
+        setAllBooks(uniqueBooks);
       }
     } catch (e) {
-      const bookMap = await MetadataStore.getBooks();
-      const remote = Object.values(bookMap).filter((b) => !b.localPath);
-      remote.sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
-      setAllBooks(remote);
+      if (reset) {
+        const bookMap = await MetadataStore.getBooks();
+        const remote = Object.values(bookMap).filter((b) => !b.localPath);
+        remote.sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
+        setAllBooks(remote);
+      }
     } finally {
       setRefreshing(false);
+      setLoadingMore(false);
     }
-  }, []);
+  }, [isOffline, offsetId, hasMore, allBooks]);
 
   const setupStorage = async (): Promise<string | null> => {
     const uri = await FileStore.requestDirectory();
     if (uri) {
       setPublicDir(uri);
-      await load();
+      setHasMore(true);
+      await load(true);
     }
     return uri;
   };
 
   useEffect(() => {
     FileStore.getPublicUri().then(setPublicDir);
-    load();
+    setHasMore(true);
+    load(true);
     const sub = DownloadStore.subscribe(() => {
       const dls: Record<string, ActiveDownload> = {};
       DownloadStore.getAll().forEach((d) => { dls[d.bookId] = d; });
@@ -233,9 +260,14 @@ export default function IndexScreen() {
   };
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
+    setHasMore(true);
+    await load(true);
+  };
+
+  const loadMoreData = () => {
+    if (!loadingMore && !refreshing && hasMore) {
+      load(false);
+    }
   };
 
   const filtered = allBooks.filter((b) => {
@@ -390,6 +422,15 @@ export default function IndexScreen() {
               tintColor={colors.primary}
               colors={[colors.primary]}
             />
+          }
+          onEndReached={loadMoreData}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : null
           }
           ListEmptyComponent={
             <View style={{ marginTop: 80, alignItems: 'center', paddingHorizontal: 32 }}>
