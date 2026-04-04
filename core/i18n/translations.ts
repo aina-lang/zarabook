@@ -175,6 +175,7 @@ export const fr = {
     unknownAuthor: "Auteur inconnu",
     importError: "Échec de l'import.",
     importErrorTitle: "Erreur d'import",
+    invalidFileType: "Seuls les fichiers PDF, EPUB et Office (Word, Excel, PowerPoint) sont acceptés.",
   },
   categories: {
     fiction: "Roman / Fiction",
@@ -377,6 +378,7 @@ export const en: typeof fr = {
     unknownAuthor: "Unknown author",
     importError: "Import failed.",
     importErrorTitle: "Import Error",
+    invalidFileType: "Only PDF, EPUB, and Office (Word, Excel, PowerPoint) files are accepted.",
   },
   categories: {
     fiction: "Novel / Fiction",
@@ -579,6 +581,7 @@ export const mg: typeof fr = {
     unknownAuthor: "Mpanoratra tsy fantatra",
     importError: "Tsy nahomby ny fampidirana.",
     importErrorTitle: "Hadisoana tamin'ny fampidirana",
+    invalidFileType: "Ny rakitra PDF, EPUB ary Office (Word, Excel, PowerPoint) ihany no azo ampidirina.",
   },
   categories: {
     fiction: "Tantara foronina",
@@ -781,6 +784,7 @@ export const de: typeof fr = {
     unknownAuthor: "Unbekannter Autor",
     importError: "Import fehlgeschlagen.",
     importErrorTitle: "Importfehler",
+    invalidFileType: "Nur PDF-, EPUB- und Office-Dateien (Word, Excel, PowerPoint) werden akzeptiert.",
   },
   categories: {
     fiction: "Belletristik / Fiktion",

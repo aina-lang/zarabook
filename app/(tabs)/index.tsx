@@ -307,12 +307,41 @@ export default function IndexScreen() {
       return;
     }
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      const allowedTypes = [
+        'application/pdf',
+        'application/epub+zip',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      ];
+
+      const result = await DocumentPicker.getDocumentAsync({ 
+        type: allowedTypes, 
+        copyToCacheDirectory: true 
+      });
+
       if (!result.canceled && result.assets?.length > 0) {
         const file = result.assets[0];
-        router.push({ pathname: '/upload-form', params: { uri: file.uri, name: file.name, size: file.size ? file.size.toString() : '0' } });
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const validExtensions = ['pdf', 'epub', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+
+        if (extension && validExtensions.includes(extension)) {
+          router.push({ 
+            pathname: '/upload-form', 
+            params: { uri: file.uri, name: file.name, size: file.size ? file.size.toString() : '0' } 
+          });
+        } else {
+          showModal({ 
+            type: 'error', 
+            title: t('upload.errorTitle'), 
+            message: t('upload.invalidFileType') || 'Seuls les fichiers PDF, EPUB et Office sont acceptés.' 
+          });
+        }
       }
-    } catch {
+    } catch (err) {
       showModal({ type: 'error', title: t('common.error'), message: t('upload.errorMsg') });
     }
   };
