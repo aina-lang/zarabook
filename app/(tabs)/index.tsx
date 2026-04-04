@@ -484,6 +484,7 @@ export default function IndexScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         style={{ height: 44, flexGrow: 0, flexShrink: 0 }}
         contentContainerStyle={{
           paddingHorizontal: 14,
@@ -520,6 +521,7 @@ export default function IndexScreen() {
       ) : (
         <FlatList
           style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
           data={filtered}
           keyExtractor={(item) => item.id}
           keyboardDismissMode="on-drag"

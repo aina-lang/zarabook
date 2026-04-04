@@ -25,7 +25,9 @@ import {
   Platform,
   StatusBar,
   StyleSheet,
+  Share,
 } from 'react-native';
+import * as Sharing from 'expo-sharing';
 import { BlurView } from 'expo-blur';
 import { useConnectivity } from '@/core/context/ConnectivityContext';
 import { FileStore } from '@/core/storage/fileStore';
@@ -201,6 +203,24 @@ export default function BookDetailScreen() {
     });
   };
 
+  const handleShare = async () => {
+    try {
+      if (book.localPath && await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(book.localPath, {
+          mimeType: book.format === 'pdf' ? 'application/pdf' : 'application/epub+zip',
+          dialogTitle: t('book.shareTitle', { title: book.title }),
+        });
+      } else {
+        await Share.share({
+          title: book.title,
+          message: `${book.title} - ${book.author}\n\n${t('book.shareMessage')}\n\nhttps://zarabook.app/book/${book.id}`,
+        });
+      }
+    } catch (error) {
+      console.log('Error sharing', error);
+    }
+  };
+
   const isLocal = !!book.localPath;
   const status = activeDownload?.status;
   const downloading = status === 'downloading' || status === 'pending';
@@ -246,6 +266,7 @@ export default function BookDetailScreen() {
           </Animated.Text>
 
           <TouchableOpacity 
+            onPress={handleShare}
             style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' }}
           >
             <Share2 size={20} color="#fff" />
@@ -255,6 +276,7 @@ export default function BookDetailScreen() {
 
       <Animated.ScrollView 
         style={{ flex: 1 }} 
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -401,19 +423,16 @@ function MetaPill({ icon, label }: { icon: any, label: string }) {
 
 
 function HeroBackground({ color, thumbnailMessageId }: { color: string, thumbnailMessageId?: string | number }) {
-  const { colors } = useTheme();
+
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: HERO_HEIGHT + 150, backgroundColor: color }}>
       {thumbnailMessageId && (
         <Image 
           source={{ uri: `https://zarabook-api.onrender.com/telegram/thumbnail/${thumbnailMessageId}` }} 
-          style={{ width: '100%', height: '100%', opacity: 0.35 }} 
-          blurRadius={20}
+          style={{ width: '100%', height: '100%', opacity: 0.5 }} 
+          // blurRadius={50}
         />
       )}
-      {/* Simulated gradient using multiple views for the transition to background color */}
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 250, backgroundColor: colors.background }} />
-      <View style={{ position: 'absolute', bottom: 250, left: 0, right: 0, height: 100, backgroundColor: colors.background, opacity: 0.5 }} />
     </View>
   );
 }

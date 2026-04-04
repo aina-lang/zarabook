@@ -123,7 +123,11 @@ export default function SettingsScreen() {
         <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{t('settings.title')}</Text>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+      <ScrollView 
+        style={{ flex: 1 }} 
+        contentContainerStyle={{ padding: 16, paddingBottom: 60 }}
+        showsVerticalScrollIndicator={false}
+      >
         <UpdateBanner />
 
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8, marginTop: 10 }}>{t('settings.appearance')}</Text>

@@ -178,6 +178,7 @@ export default function DownloadsScreen() {
       {sections.length === 0 ? (
         <ScrollView
           contentContainerStyle={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
+          showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
           <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: colors.primary + '10', borderWidth: 1, borderColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
@@ -189,6 +190,7 @@ export default function DownloadsScreen() {
       ) : (
         <FlatList
           data={sections}
+          showsVerticalScrollIndicator={false}
           keyExtractor={(item: any) => item.type === 'header' ? `h-${item.title}` : (item.bookId || item.id)}
           renderItem={({ item }: any) => {
             if (item.type === 'header') {

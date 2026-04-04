@@ -112,7 +112,12 @@ export default function UploadForm() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        style={{ flex: 1 }} 
+        contentContainerStyle={{ padding: 24 }} 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ marginBottom: 24 }}>
           <Label icon={<Book size={14} color={colors.primary} />} text={t('upload.bookTitle')} />
           <TextInput

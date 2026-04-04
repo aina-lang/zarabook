@@ -255,6 +255,7 @@ export default function OnboardingScreen() {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged}
