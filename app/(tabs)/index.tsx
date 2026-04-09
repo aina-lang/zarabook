@@ -38,7 +38,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CATEGORIES = [
   'all', 'fiction', 'science_fiction', 'fantasy', 'thriller', 
-  'self_help', 'business', 'tech', 'education', 'health', 'art', 'history', 'other'
+  'self_help', 'business', 'tech', 'education', 'health', 'art', 'history',
+  'religion', 'comics', 'cooking', 'kids', 'biography', 'science', 'politics', 'other'
 ];
 
 import { CATEGORY_MAP } from '@/core/utils/categoryUtils';

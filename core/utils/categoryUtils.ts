@@ -10,6 +10,13 @@ export const CATEGORY_MAP: Record<string, string> = {
   "health": "Santé & Bien-être",
   "art": "Art & Design",
   "history": "Histoire",
+  "religion": "Religions & Spiritualité",
+  "comics": "BD / Mangas / Comics",
+  "cooking": "Cuisine & Gastronomie",
+  "kids": "Jeunesse / Enfants",
+  "biography": "Biographie / Mémoires",
+  "science": "Sciences & Nature",
+  "politics": "Droit & Politique",
   "other": "Autre"
 };
 

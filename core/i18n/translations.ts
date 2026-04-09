@@ -191,6 +191,13 @@ export const fr = {
     health: "Santé & Bien-être",
     art: "Art & Design",
     history: "Histoire",
+    religion: "Religions & Spiritualité",
+    comics: "BD / Mangas / Comics",
+    cooking: "Cuisine & Gastronomie",
+    kids: "Jeunesse / Enfants",
+    biography: "Biographie / Mémoires",
+    science: "Sciences & Nature",
+    politics: "Droit & Politique",
     other: "Autre"
   },
   components: {
@@ -396,6 +403,13 @@ export const en: typeof fr = {
     health: "Health & Wellness",
     art: "Art & Design",
     history: "History",
+    religion: "Religions & Spirituality",
+    comics: "Comics / Manga",
+    cooking: "Cooking & Gastronomy",
+    kids: "Kids / Children",
+    biography: "Biography / Memoirs",
+    science: "Science & Nature",
+    politics: "Law & Politics",
     other: "Other"
   },
   components: {
@@ -601,6 +615,13 @@ export const mg: typeof fr = {
     health: "Fahasalamana",
     art: "Kanto & Design",
     history: "Tantara",
+    religion: "Finoana & Fanahy",
+    comics: "BD / Mangas",
+    cooking: "Sakafo / Nahandro",
+    kids: "Ankizy",
+    biography: "Tantaram-piainana",
+    science: "Siansa & Zavaboary",
+    politics: "Lalàna & Politika",
     other: "Hafa"
   },
   components: {
@@ -806,6 +827,13 @@ export const de: typeof fr = {
     health: "Gesundheit & Wellness",
     art: "Kunst & Design",
     history: "Geschichte",
+    religion: "Religion & Spiritualität",
+    comics: "Comics / Mangas",
+    cooking: "Kochen & Gastronomie",
+    kids: "Kinder / Jugend",
+    biography: "Biografie / Memoiren",
+    science: "Wissenschaft & Natur",
+    politics: "Recht & Politik",
     other: "Andere"
   },
   components: {
