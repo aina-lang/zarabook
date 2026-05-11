@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import 'react-native-reanimated';
 import './global.css';
 import { StatusBar } from 'expo-status-bar';
@@ -11,24 +11,25 @@ import { ConnectivityBanner } from '@/components/ConnectivityBanner';
 import { ThemeProvider, useTheme } from '@/core/context/ThemeContext';
 import { activateKeepAwakeAsync } from 'expo-keep-awake';
 import { LanguageProvider, useTranslation } from '@/core/i18n/I18nContext';
+import { AuthProvider, useAuth } from '@/core/context/AuthContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { TransitionOverlay } from '@/components/TransitionOverlay';
 import { CustomSplashScreen } from '@/components/CustomSplashScreen';
 import { SocketService } from '@/core/services/socketService';
 import { UpdateService, AppUpdateData } from '@/core/services/updateService';
-import { pushNotificationService } from '@/core/services/pushNotificationService';
-import * as Notifications from 'expo-notifications';
+// import { pushNotificationService } from '@/core/services/pushNotificationService';
+// import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: true,
+//     shouldShowBanner: true,
+//     shouldShowList: true,
+//   }),
+// });
 
 // Empêche l'auto-hide du splash natif
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -39,6 +40,8 @@ function RootLayoutContent() {
   const [showSplash, setShowSplash] = useState(true);
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
   const router = useRouter();
+  const segments = useSegments();
+  const { user, isLoading } = useAuth();
 
   // Vérifier onboarding
   useEffect(() => {
@@ -61,6 +64,22 @@ function RootLayoutContent() {
     }
   }, [showSplash]);
 
+  // Redirection automatique globale (Auth Guard)
+  useEffect(() => {
+    if (isLoading || hasOnboarded === null) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
+
+    if (!hasOnboarded && segments[0] !== 'onboarding') {
+      router.replace('/onboarding');
+    } else if (hasOnboarded && !user && !inAuthGroup && segments[0] !== 'onboarding') {
+      router.replace('/(auth)/login');
+    } else if (hasOnboarded && user && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [user, isLoading, hasOnboarded, segments]);
+
   // Affichage du splash custom (utilisé aussi comme loading)
   if (showSplash || !isReady || hasOnboarded === null) {
     return (
@@ -79,6 +98,8 @@ function RootLayoutContent() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(auth)/login" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(auth)/register" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen
           name="book/[id]"
@@ -101,25 +122,25 @@ export default function RootLayout() {
     SocketService.init();
 
     // Enregistrement pour les notifications Push (Nouvel upload, etc.)
-    pushNotificationService.registerForPushNotificationsAsync().catch(e => {
-       console.log('[RootLayout] Erreur init push:', e);
-    });
+    // pushNotificationService.registerForPushNotificationsAsync().catch(e => {
+    //    console.log('[RootLayout] Erreur init push:', e);
+    // });
 
     const unsubscribe = SocketService.subscribeToAppUpdates((data: AppUpdateData) => {
       const CURRENT_VERSION = Constants.expoConfig?.version || (Constants as any).manifest?.version || '1.0.0';
       if (UpdateService.isNewerVersion(CURRENT_VERSION, data.version)) {
-        Notifications.requestPermissionsAsync().then(({ status }) => {
-          if (status === 'granted') {
-            Notifications.scheduleNotificationAsync({
-              content: {
-                title: "Mise à jour disponible 🚀",
-                body: `La nouvelle version ${data.version} de ZaraBook est prête à être installée.`,
-                data: { downloadUrl: data.downloadUrl },
-              },
-              trigger: null,
-            });
-          }
-        });
+        // Notifications.requestPermissionsAsync().then(({ status }) => {
+        //   if (status === 'granted') {
+        //     Notifications.scheduleNotificationAsync({
+        //       content: {
+        //         title: "Mise à jour disponible 🚀",
+        //         body: `La nouvelle version ${data.version} de ZaraBook est prête à être installée.`,
+        //         data: { downloadUrl: data.downloadUrl },
+        //       },
+        //       trigger: null,
+        //     });
+        //   }
+        // });
       }
     });
 
@@ -132,11 +153,13 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <ConnectivityProvider>
-          <ModalProvider>
-            <RootLayoutContent />
-          </ModalProvider>
-        </ConnectivityProvider>
+        <AuthProvider>
+          <ConnectivityProvider>
+            <ModalProvider>
+              <RootLayoutContent />
+            </ModalProvider>
+          </ConnectivityProvider>
+        </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

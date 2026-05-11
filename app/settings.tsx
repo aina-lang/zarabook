@@ -6,10 +6,11 @@ import { FileStore } from '@/core/storage/fileStore';
 import { DownloadMode, DownloadStore } from '@/core/store/downloadStore';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Database, FolderOpen, Github, Globe, GraduationCap, Info, Layers, Mail, MessageCircle, Minus, Moon, Plus, Shield, Smartphone, Sun, Wifi } from 'lucide-react-native';
+import { ChevronLeft, Database, FolderOpen, Github, Globe, GraduationCap, Info, Layers, Mail, MessageCircle, Minus, Moon, Plus, Shield, Smartphone, Sun, Wifi, LogOut, User as UserIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, Switch, Text, TouchableOpacity, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/core/context/AuthContext';
 
 export default function SettingsScreen() {
   const { theme, colors, toggleTheme, isDark } = useTheme();
@@ -22,6 +23,7 @@ export default function SettingsScreen() {
   const [maxConcurrent, setMaxConcurrent] = useState(DownloadStore.getMaxConcurrent());
   const [publicDir, setPublicDir] = useState<string | null>(null);
   const [isCleaning, setIsCleaning] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     FileStore.getPublicUri().then(setPublicDir);
@@ -129,6 +131,52 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <UpdateBanner />
+
+        {/* Profil Utilisateur */}
+        {user && (
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8, marginTop: 10 }}>PROFIL</Text>
+            <View style={{ backgroundColor: colors.card + '20', borderRadius: 20, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border }}>
+              <View style={{ paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <UserIcon size={24} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{user.fullname}</Text>
+                  <Text style={{ color: colors.textDim, fontSize: 13, marginTop: 2 }}>{user.email}</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    "Déconnexion",
+                    "Êtes-vous sûr de vouloir vous déconnecter ?",
+                    [
+                      { text: "Annuler", style: "cancel" },
+                      { 
+                        text: "Se déconnecter", 
+                        style: "destructive",
+                        onPress: async () => {
+                          await logout();
+                          router.replace('/(auth)/login');
+                        }
+                      }
+                    ]
+                  );
+                }}
+                style={{ paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(239,68,68,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                    <LogOut size={18} color="#ef4444" />
+                  </View>
+                  <Text style={{ color: '#ef4444', fontSize: 15, fontWeight: '600' }}>Se déconnecter</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 8, marginTop: 10 }}>{t('settings.appearance')}</Text>
         <View style={{ backgroundColor: colors.card + '20', borderRadius: 20, paddingHorizontal: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>

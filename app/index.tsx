@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
+import { useAuth } from '@/core/context/AuthContext';
 
 export default function Index() {
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -21,13 +23,21 @@ export default function Index() {
     return () => { mounted = false; };
   }, []);
 
-  if (hasOnboarded === null) {
-    return <View style={{ flex: 1, backgroundColor: '#000' }} />;
+  if (hasOnboarded === null || isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator color="#fff" size="large" />
+      </View>
+    );
   }
 
-  if (hasOnboarded) {
-    return <Redirect href="/(tabs)" />;
-  } else {
+  if (!hasOnboarded) {
     return <Redirect href="/onboarding" />;
   }
+
+  if (!user) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  return <Redirect href="/(tabs)" />;
 }
